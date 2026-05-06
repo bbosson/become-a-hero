@@ -1,0 +1,9 @@
+build_from:
+  aarch64: "ghcr.io/home-assistant/aarch64-base:latest"
+  amd64: "ghcr.io/home-assistant/amd64-base:latest"
+  armv7: "ghcr.io/home-assistant/armv7-base:latest"
+labels:
+  org.opencontainers.image.title: "Become a Hero"
+  org.opencontainers.image.description: "Livres dont vous êtes le héros interactifs"
+  org.opencontainers.image.source: "https://github.com/GITHUB_USER/become-a-hero"
+  org.opencontainers.image.licenses: "MIT"

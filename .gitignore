@@ -41,8 +41,6 @@ next-env.d.ts
 # env secrets
 .env
 
-# prisma migrations (env-specific)
-/prisma/migrations/
 
 # Windows metadata streams
 *:Zone.Identifier
