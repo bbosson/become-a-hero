@@ -27,6 +27,7 @@ export async function PUT(
       nodeOrder: body.nodeOrder ?? [],
       choicesTaken: body.choicesTaken ?? {},
       checkpoints: body.checkpoints ?? [],
+      revealedEdges: body.revealedEdges ?? [],
     },
     update: {
       currentNodeNumber: body.currentNodeNumber,
@@ -35,8 +36,17 @@ export async function PUT(
       nodeOrder: body.nodeOrder ?? [],
       choicesTaken: body.choicesTaken ?? {},
       checkpoints: body.checkpoints ?? [],
+      revealedEdges: body.revealedEdges ?? [],
     },
   })
 
   return NextResponse.json(savegame)
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: { bookId: string } }
+) {
+  await prisma.savegame.deleteMany({ where: { bookId: params.bookId } })
+  return NextResponse.json({ ok: true })
 }

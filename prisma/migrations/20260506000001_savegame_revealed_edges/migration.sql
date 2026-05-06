@@ -1,0 +1,1 @@
+ALTER TABLE `Savegame` ADD COLUMN `revealedEdges` JSON NOT NULL DEFAULT (JSON_ARRAY());

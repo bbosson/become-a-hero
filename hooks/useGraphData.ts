@@ -5,6 +5,8 @@ export interface GraphNodeData {
   id: string
   number: number
   title: string | null
+  icon: string | null
+  isCheckpoint: boolean
   state: 'current' | 'visited' | 'discovered'
 }
 
@@ -26,14 +28,18 @@ export function useGraphData(
     const edgeSet = new Set<string>()
     const edges: GraphEdgeData[] = []
     const visitedSet = new Set(savegame.visitedNodes)
+    const checkpointNums = new Set(savegame.checkpoints.map(c => c.nodeNumber))
 
     // 1. Nœuds visités (+ courant)
     for (const n of savegame.visitedNodes) {
+      const isCurrent = currentNode ? n === currentNode.number : n === savegame.currentNodeNumber
       nodeMap.set(n, {
         id: `n-${n}`,
         number: n,
-        title: null,
-        state: n === savegame.currentNodeNumber ? 'current' : 'visited',
+        title: isCurrent ? (currentNode?.title ?? null) : null,
+        icon: isCurrent ? (currentNode?.icon ?? null) : null,
+        isCheckpoint: checkpointNums.has(n),
+        state: isCurrent ? 'current' : 'visited',
       })
     }
 
@@ -51,12 +57,13 @@ export function useGraphData(
     // 3. Toutes les arêtes révélées (choix vus lors de visites précédentes)
     const revealed = savegame.revealedEdges || []
     for (const edge of revealed) {
-      // Nœud cible non visité → état "discovered"
       if (!nodeMap.has(edge.to)) {
         nodeMap.set(edge.to, {
           id: `n-${edge.to}`,
           number: edge.to,
           title: null,
+          icon: null,
+          isCheckpoint: checkpointNums.has(edge.to),
           state: 'discovered',
         })
       }
@@ -72,7 +79,7 @@ export function useGraphData(
       }
     }
 
-    // 4. Choix du nœud courant (pas encore dans revealedEdges — révélation immédiate)
+    // 4. Choix du nœud courant (révélation immédiate)
     if (currentNode) {
       for (const choice of currentNode.choices) {
         const t = choice.targetNodeNumber
@@ -81,6 +88,8 @@ export function useGraphData(
             id: `n-${t}`,
             number: t,
             title: null,
+            icon: null,
+            isCheckpoint: checkpointNums.has(t),
             state: visitedSet.has(t) ? 'visited' : 'discovered',
           })
         }

@@ -14,6 +14,7 @@ export default async function HomePage() {
           currentNodeNumber: true,
           resumeNodeNumber: true,
           visitedNodes: true,
+          checkpoints: true,
         },
       },
     },
@@ -29,7 +30,6 @@ export default async function HomePage() {
           bookId: b.id,
           nodeOrder: [],
           choicesTaken: {},
-          checkpoints: [],
           updatedAt: '',
         }
       : null,

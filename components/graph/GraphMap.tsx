@@ -25,36 +25,38 @@ const nodeTypes: NodeTypes = {
 }
 
 export default function GraphMap({ graphNodes, graphEdges, bookId, onNodeClick }: Props) {
-  const [titles, setTitles] = useState<Map<number, string | null>>(new Map())
+  const [meta, setMeta] = useState<Map<number, { title: string | null; icon: string | null }>>(new Map())
 
-  // Fetch titles for all visible nodes in batches
+  // Batch-fetch title+icon for all visible nodes not yet cached
   useEffect(() => {
-    const missing = graphNodes
-      .filter(n => !titles.has(n.number))
-      .map(n => n.number)
-
+    const missing = graphNodes.filter(n => !meta.has(n.number)).map(n => n.number)
     if (missing.length === 0) return
 
-    Promise.all(
-      missing.map(num =>
-        fetch(`/api/nodes/${bookId}/${num}`)
-          .then(r => r.ok ? r.json() : null)
-          .then(data => ({ num, title: data?.title || null }))
-          .catch(() => ({ num, title: null }))
-      )
-    ).then(results => {
-      setTitles(prev => {
-        const next = new Map(prev)
-        results.forEach(({ num, title }) => next.set(num, title))
-        return next
+    fetch(`/api/nodes/${bookId}/meta?nums=${missing.join(',')}`)
+      .then(r => r.ok ? r.json() : {})
+      .then((data: Record<string, { title: string | null; icon: string | null }>) => {
+        setMeta(prev => {
+          const next = new Map(prev)
+          for (const [numStr, val] of Object.entries(data)) {
+            next.set(parseInt(numStr, 10), val)
+          }
+          return next
+        })
       })
-    })
+      .catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookId, graphNodes.length])
 
   const enrichedNodes = useMemo(() =>
-    graphNodes.map(n => ({ ...n, title: titles.get(n.number) ?? n.title })),
-    [graphNodes, titles]
+    graphNodes.map(n => {
+      const cached = meta.get(n.number)
+      return {
+        ...n,
+        title: cached?.title ?? n.title,
+        icon: cached?.icon ?? n.icon,
+      }
+    }),
+    [graphNodes, meta]
   )
 
   const { nodes: rfNodes, edges: rfEdges } = useMemo(
@@ -76,7 +78,6 @@ export default function GraphMap({ graphNodes, graphEdges, bookId, onNodeClick }
   const [nodes, , onNodesChange] = useNodesState(nodesWithClick)
   const [edges, , onEdgesChange] = useEdgesState(rfEdges)
 
-  // Sync when graph data changes
   useEffect(() => {
     onNodesChange(nodesWithClick.map(n => ({ type: 'reset' as const, item: n })))
   // eslint-disable-next-line react-hooks/exhaustive-deps

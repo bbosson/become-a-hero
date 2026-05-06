@@ -5,7 +5,7 @@ export interface RFNode {
   id: string
   type: string
   position: { x: number; y: number }
-  data: { number: number; title: string | null; state: string }
+  data: { number: number; title: string | null; icon: string | null; isCheckpoint: boolean; state: string }
 }
 
 export interface RFEdge {
@@ -44,7 +44,7 @@ export function buildDag(graphNodes: GraphNodeData[], graphEdges: GraphEdgeData[
         x: pos ? pos.x - NODE_WIDTH / 2 : 0,
         y: pos ? pos.y - NODE_HEIGHT / 2 : 0,
       },
-      data: { number: n.number, title: n.title, state: n.state },
+      data: { number: n.number, title: n.title, icon: n.icon, isCheckpoint: n.isCheckpoint, state: n.state },
     }
   })
 

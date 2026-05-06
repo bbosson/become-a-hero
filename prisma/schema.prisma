@@ -27,6 +27,7 @@ model Node {
   bookId     String
   number     Int
   title      String?
+  icon       String?  @db.VarChar(10)
   summary    String?  @db.Text
   contentRaw String   @db.Text
   choices    Json     @default("[]")
@@ -62,6 +63,7 @@ model Savegame {
   nodeOrder         Json     @default("[]")
   choicesTaken      Json     @default("{}")
   checkpoints       Json     @default("[]")
+  revealedEdges     Json     @default("[]")
   updatedAt         DateTime @updatedAt
 
   book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)

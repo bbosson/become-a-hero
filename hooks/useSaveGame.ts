@@ -1,14 +1,16 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { SavegameData, Checkpoint, Choice, RevealedEdge } from '@/types'
 
 export function useSaveGame(bookId: string) {
   const [savegame, setSavegame] = useState<SavegameData | null>(null)
   const [loading, setLoading] = useState(true)
+  const ref = useRef<SavegameData | null>(null)
 
   useEffect(() => {
     fetch(`/api/savegame/${bookId}`)
       .then(res => res.json())
       .then(data => {
+        ref.current = data
         setSavegame(data)
         setLoading(false)
       })
@@ -16,7 +18,8 @@ export function useSaveGame(bookId: string) {
   }, [bookId])
 
   const save = useCallback(async (data: Partial<SavegameData>) => {
-    const updated = { ...savegame, ...data }
+    const updated = { ...ref.current, ...data }
+    ref.current = updated as SavegameData
     setSavegame(updated as SavegameData)
 
     const res = await fetch(`/api/savegame/${bookId}`, {
@@ -25,17 +28,18 @@ export function useSaveGame(bookId: string) {
       body: JSON.stringify(updated),
     })
     const saved = await res.json()
+    ref.current = saved
     setSavegame(saved)
     return saved
-  }, [bookId, savegame])
+  }, [bookId])
 
-  // choices = les choix du nœud courant, enregistrés comme arêtes révélées
   const navigateTo = useCallback(async (
     nodeNumber: number,
     fromNode?: number,
     fromChoices?: Choice[]
   ) => {
-    if (!savegame) {
+    const sg = ref.current
+    if (!sg) {
       await save({
         bookId,
         currentNodeNumber: nodeNumber,
@@ -48,18 +52,17 @@ export function useSaveGame(bookId: string) {
       return
     }
 
-    const visitedNodes = savegame.visitedNodes.includes(nodeNumber)
-      ? savegame.visitedNodes
-      : [...savegame.visitedNodes, nodeNumber]
+    const visitedNodes = sg.visitedNodes.includes(nodeNumber)
+      ? sg.visitedNodes
+      : [...sg.visitedNodes, nodeNumber]
 
-    const nodeOrder = [...savegame.nodeOrder, nodeNumber]
+    const nodeOrder = [...sg.nodeOrder, nodeNumber]
 
     const choicesTaken = fromNode !== undefined
-      ? { ...savegame.choicesTaken, [fromNode]: nodeNumber }
-      : savegame.choicesTaken
+      ? { ...sg.choicesTaken, [fromNode]: nodeNumber }
+      : sg.choicesTaken
 
-    // Merge new revealed edges (choix visibles au moment de naviguer)
-    let revealedEdges: RevealedEdge[] = savegame.revealedEdges || []
+    let revealedEdges: RevealedEdge[] = sg.revealedEdges || []
     if (fromNode !== undefined && fromChoices) {
       const existingKeys = new Set(revealedEdges.map(e => `${e.from}-${e.to}`))
       for (const choice of fromChoices) {
@@ -78,31 +81,33 @@ export function useSaveGame(bookId: string) {
       choicesTaken,
       revealedEdges,
     })
-  }, [bookId, savegame, save])
+  }, [bookId, save])
 
   const pinResumeHere = useCallback(async (nodeNumber: number) => {
     await save({ resumeNodeNumber: nodeNumber })
   }, [save])
 
   const addCheckpoint = useCallback(async (nodeNumber: number, title: string) => {
-    if (!savegame) return
-    const existing = savegame.checkpoints.find(c => c.nodeNumber === nodeNumber)
+    const sg = ref.current
+    if (!sg) return
+    const existing = sg.checkpoints.find(c => c.nodeNumber === nodeNumber)
     if (existing) return
     const checkpoints: Checkpoint[] = [
-      ...savegame.checkpoints,
+      ...sg.checkpoints,
       { nodeNumber, title, savedAt: new Date().toISOString() },
     ]
     await save({ checkpoints })
-  }, [savegame, save])
+  }, [save])
 
   const removeCheckpoint = useCallback(async (nodeNumber: number) => {
-    if (!savegame) return
-    const checkpoints = savegame.checkpoints.filter(c => c.nodeNumber !== nodeNumber)
+    const sg = ref.current
+    if (!sg) return
+    const checkpoints = sg.checkpoints.filter(c => c.nodeNumber !== nodeNumber)
     await save({ checkpoints })
-  }, [savegame, save])
+  }, [save])
 
   const restart = useCallback(async () => {
-    if (!savegame) return
+    if (!ref.current) return
     await save({
       currentNodeNumber: 1,
       resumeNodeNumber: null,
@@ -110,9 +115,17 @@ export function useSaveGame(bookId: string) {
       nodeOrder: [],
       choicesTaken: {},
       revealedEdges: [],
-      // checkpoints survive restart
     })
-  }, [savegame, save])
+  }, [save])
 
-  return { savegame, loading, navigateTo, pinResumeHere, addCheckpoint, removeCheckpoint, restart }
+  const isVisited = useCallback((nodeNumber: number) =>
+    (ref.current?.visitedNodes || []).includes(nodeNumber)
+  , [])
+
+  const markCurrent = useCallback(async (nodeNumber: number) => {
+    if (ref.current?.currentNodeNumber === nodeNumber) return
+    await save({ currentNodeNumber: nodeNumber })
+  }, [save])
+
+  return { savegame, saveLoading: loading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited }
 }

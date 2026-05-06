@@ -7,6 +7,8 @@ interface Props {
   data: {
     number: number
     title: string | null
+    icon: string | null
+    isCheckpoint: boolean
     state: 'current' | 'visited' | 'discovered'
     onClick?: (number: number) => void
   }
@@ -24,11 +26,17 @@ function GraphNodeComponent({ data }: Props) {
 
   return (
     <div
-      className={`rounded-lg border px-2 py-1.5 text-center w-[120px] transition-all ${style}`}
+      className={`rounded-lg border px-2 py-1.5 text-center w-[120px] transition-all relative ${style}`}
       onClick={clickable && data.onClick ? () => data.onClick!(data.number) : undefined}
     >
+      {data.isCheckpoint && (
+        <span className="absolute -top-2 -right-2 text-sm leading-none" title="Checkpoint">🚩</span>
+      )}
       <Handle type="target" position={Position.Top} className="opacity-0" />
-      <div className="text-xs font-mono font-bold">§{data.number}</div>
+      <div className="flex items-center justify-center gap-1">
+        {data.icon && <span className="text-sm leading-none">{data.icon}</span>}
+        <span className="text-xs font-mono font-bold">§{data.number}</span>
+      </div>
       {data.title && (
         <div className="text-[10px] leading-tight mt-0.5 truncate opacity-80">
           {data.title}

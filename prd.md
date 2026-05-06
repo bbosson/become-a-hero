@@ -1346,3 +1346,5 @@ ELEVENLABS_API_KEY=
   }
 }
 ```
+
+Le serveur doit demarré avec "npm run dev"

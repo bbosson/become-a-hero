@@ -1,6 +1,7 @@
 'use client'
 
-import { BookData } from '@/types'
+import { useState } from 'react'
+import { BookData, Checkpoint } from '@/types'
 import { useRouter } from 'next/navigation'
 
 interface Props {
@@ -18,8 +19,12 @@ function getBookStatus(book: BookData): 'new' | 'in_progress' | 'finished' {
 export default function BookCard({ book }: Props) {
   const router = useRouter()
   const status = getBookStatus(book)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   const resumeNode = book.savegame?.resumeNodeNumber || book.savegame?.currentNodeNumber || 1
+  const checkpoints: Checkpoint[] = (book.savegame?.checkpoints as Checkpoint[]) || []
+  const visitedCount = (book.savegame?.visitedNodes as number[])?.length || 0
 
   const statusBadge = {
     new: { label: '○ Nouveau', color: 'text-stone-400' },
@@ -34,6 +39,14 @@ export default function BookCard({ book }: Props) {
     } else {
       router.push(`/play/${book.id}/intro`)
     }
+  }
+
+  const handleReset = async () => {
+    setResetting(true)
+    await fetch(`/api/savegame/${book.id}`, { method: 'DELETE' })
+    router.refresh()
+    setResetting(false)
+    setConfirmReset(false)
   }
 
   if (book.status === 'processing') {
@@ -77,19 +90,69 @@ export default function BookCard({ book }: Props) {
           <div className="w-full bg-stone-800 rounded-full h-1">
             <div
               className="bg-amber-500 h-1 rounded-full transition-all"
-              style={{
-                width: `${Math.round(((book.savegame?.visitedNodes as number[])?.length || 0) / Math.max(book.totalNodes, 1) * 100)}%`
-              }}
+              style={{ width: `${Math.round(visitedCount / Math.max(book.totalNodes, 1) * 100)}%` }}
             />
           </div>
         )}
 
+        {/* Bouton principal */}
         <button
           onClick={handlePlay}
-          className="mt-auto w-full py-2 px-4 rounded-lg bg-amber-700 hover:bg-amber-600 text-white text-sm font-medium transition-colors"
+          className="w-full py-2 px-4 rounded-lg bg-amber-700 hover:bg-amber-600 text-white text-sm font-medium transition-colors"
         >
-          {status === 'in_progress' ? 'Reprendre' : status === 'finished' ? 'Rejouer' : 'Jouer'}
+          {status === 'in_progress' ? `Reprendre (§${resumeNode})` : status === 'finished' ? 'Rejouer' : 'Jouer'}
         </button>
+
+        {/* Reset */}
+        {(status === 'in_progress' || status === 'finished') && (
+          <div className="flex items-center justify-end">
+            {confirmReset ? (
+              <div className="flex items-center gap-2 w-full">
+                <span className="text-xs text-stone-400 flex-1">Effacer toute la progression ?</span>
+                <button
+                  onClick={handleReset}
+                  disabled={resetting}
+                  className="text-xs px-2 py-1 rounded bg-red-900/50 text-red-400 hover:bg-red-900/80 border border-red-800/50 transition-colors disabled:opacity-40"
+                >
+                  {resetting ? '...' : 'Confirmer'}
+                </button>
+                <button
+                  onClick={() => setConfirmReset(false)}
+                  className="text-xs px-2 py-1 rounded text-stone-500 hover:text-stone-300 transition-colors"
+                >
+                  Annuler
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmReset(true)}
+                className="text-xs text-stone-600 hover:text-red-400 transition-colors"
+              >
+                ↺ Réinitialiser
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Checkpoints */}
+        {checkpoints.length > 0 && (
+          <div className="flex flex-col gap-1 pt-1 border-t border-stone-800/60">
+            <span className="text-xs text-stone-600">Checkpoints</span>
+            <div className="flex flex-col gap-0.5">
+              {checkpoints.map((cp) => (
+                <button
+                  key={cp.nodeNumber}
+                  onClick={() => router.push(`/play/${book.id}/${cp.nodeNumber}`)}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-stone-400 hover:text-amber-300 hover:bg-stone-800/60 transition-colors text-left"
+                >
+                  <span>🚩</span>
+                  <span className="font-mono text-stone-500">§{cp.nodeNumber}</span>
+                  <span className="truncate">{cp.title}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

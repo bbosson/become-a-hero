@@ -44,3 +44,4 @@ next-env.d.ts
 
 # Windows metadata streams
 *:Zone.Identifier
+resources/

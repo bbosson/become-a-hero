@@ -9,6 +9,7 @@ export interface NodeData {
   bookId: string
   number: number
   title: string | null
+  icon: string | null
   summary: string | null
   contentRaw: string
   choices: Choice[]

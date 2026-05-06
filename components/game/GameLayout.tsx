@@ -16,6 +16,7 @@ import EndScreen from './EndScreen'
 import GraphMap from '@/components/graph/GraphMap'
 import GraphDrawer from '@/components/graph/GraphDrawer'
 import SettingsDrawer from './SettingsDrawer'
+import LayoutPicker, { LayoutConfig, DEFAULT_LAYOUT, LAYOUT_KEY } from './LayoutPicker'
 import { SettingsData } from '@/types'
 import Link from 'next/link'
 
@@ -28,20 +29,35 @@ interface Props {
 
 export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: Props) {
   const router = useRouter()
-  const { node, loading, error, updateTitle, generateTitle } = useNode(bookId, nodeNumber)
-  const { savegame, navigateTo, pinResumeHere, addCheckpoint, removeCheckpoint, restart } = useSaveGame(bookId)
+  const { node, loading, error, updateTitle, updateIcon, generateTitle } = useNode(bookId, nodeNumber)
+  const { savegame, saveLoading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited } = useSaveGame(bookId)
   const { nodes: graphNodes, edges: graphEdges } = useGraphData(savegame, node)
   const [navigating, setNavigating] = useState(false)
+  const [layout, setLayout] = useState<LayoutConfig>(DEFAULT_LAYOUT)
 
-  // Premier chargement : enregistre ce nœud + ses choix comme révélés
   useEffect(() => {
-    if (node && savegame && !savegame.visitedNodes.includes(nodeNumber)) {
+    try {
+      const stored = localStorage.getItem(LAYOUT_KEY)
+      if (stored) setLayout(JSON.parse(stored))
+    } catch {}
+  }, [])
+
+  const updateLayout = useCallback((l: LayoutConfig) => {
+    setLayout(l)
+    localStorage.setItem(LAYOUT_KEY, JSON.stringify(l))
+  }, [])
+
+  // Attend que savegame soit chargé avant de vérifier : évite d'écraser la progression
+  // si node arrive avant la réponse API savegame (race condition)
+  useEffect(() => {
+    if (!node || saveLoading) return
+    if (!isVisited(nodeNumber)) {
       navigateTo(nodeNumber, undefined, undefined)
-    } else if (!savegame && node) {
-      navigateTo(nodeNumber)
+    } else {
+      markCurrent(nodeNumber)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [node?.number, !!savegame])
+  }, [node?.number, saveLoading])
 
   const handleChoose = useCallback(async (targetNodeNumber: number) => {
     if (navigating) return
@@ -103,27 +119,50 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0f0e17' }}>
+    <div className="h-screen flex flex-col" style={{ background: '#0f0e17' }}>
       {/* Header */}
       <header className="border-b border-amber-900/20 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Link href="/" className="text-amber-500 text-lg">⚔</Link>
-          <span className="text-stone-400 text-sm hidden sm:block">—</span>
+          <Link href="/" className="flex items-center gap-2 text-amber-500 hover:text-amber-400 transition-colors" title="Bibliothèque">
+            <span className="text-lg">⚔</span>
+            <span className="text-xs text-stone-500 hover:text-stone-400 hidden sm:inline">← Bibliothèque</span>
+          </Link>
+          <span className="text-stone-700 hidden sm:block">|</span>
           <span className="text-stone-300 text-sm hidden sm:block truncate max-w-48">{bookTitle}</span>
         </div>
-        <SettingsDrawer />
+        <div className="flex items-center gap-2">
+          <LayoutPicker layout={layout} onChange={updateLayout} />
+          <SettingsDrawer />
+        </div>
       </header>
 
-      {/* Main layout: 2/3 content + 1/3 graph (desktop) */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* Main layout — direction + split driven by layout state */}
+      <div className={`flex flex-1 overflow-hidden ${layout.direction === 'right' || layout.direction === 'left' ? 'flex-row' : 'flex-col'}`}>
+        {/* Graph pane — rendered first when map is on left or top */}
+        {(layout.direction === 'left' || layout.direction === 'top') && (
+          <div
+            className={`hidden md:flex flex-shrink-0 ${layout.direction === 'top' ? 'border-b' : 'border-r'} border-stone-800/50 flex-col min-h-0`}
+            style={{ flex: layout.split === '1-2' ? 2 : 1 }}
+          >
+            <div className="px-4 py-3 border-b border-stone-800/50 flex-shrink-0">
+              <h3 className="text-xs text-stone-500 uppercase tracking-widest">Carte de navigation</h3>
+            </div>
+            <div className="flex-1 min-h-0">
+              <GraphMap graphNodes={graphNodes} graphEdges={graphEdges} bookId={bookId} onNodeClick={handleGraphNodeClick} />
+            </div>
+          </div>
+        )}
+
         {/* Content pane */}
-        <div className="flex-1 overflow-y-auto flex flex-col">
+        <div className="flex-1 overflow-y-auto flex flex-col min-h-0" style={{ flex: layout.split === '2-1' ? 2 : 1 }}>
           <div className="flex flex-col flex-1 px-4 sm:px-6 py-5 max-w-2xl w-full mx-auto">
             <NodeHeader
               number={node.number}
               title={node.title}
+              icon={node.icon}
               onSave={updateTitle}
               onGenerateAI={generateTitle}
+              onSaveIcon={updateIcon}
             />
 
             <div className="mt-4 flex flex-col gap-4">
@@ -176,20 +215,20 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
           />
         </div>
 
-        {/* Graph sidebar — desktop only */}
-        <div className="hidden md:flex w-[340px] flex-shrink-0 border-l border-stone-800/50 flex-col">
-          <div className="px-4 py-3 border-b border-stone-800/50">
-            <h3 className="text-xs text-stone-500 uppercase tracking-widest">Carte de navigation</h3>
+        {/* Graph pane — right or bottom */}
+        {(layout.direction === 'right' || layout.direction === 'bottom') && (
+          <div
+            className={`hidden md:flex flex-shrink-0 ${layout.direction === 'bottom' ? 'border-t' : 'border-l'} border-stone-800/50 flex-col min-h-0`}
+            style={{ flex: layout.split === '1-2' ? 2 : 1 }}
+          >
+            <div className="px-4 py-3 border-b border-stone-800/50 flex-shrink-0">
+              <h3 className="text-xs text-stone-500 uppercase tracking-widest">Carte de navigation</h3>
+            </div>
+            <div className="flex-1 min-h-0">
+              <GraphMap graphNodes={graphNodes} graphEdges={graphEdges} bookId={bookId} onNodeClick={handleGraphNodeClick} />
+            </div>
           </div>
-          <div className="flex-1">
-            <GraphMap
-              graphNodes={graphNodes}
-              graphEdges={graphEdges}
-              bookId={bookId}
-              onNodeClick={handleGraphNodeClick}
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Mobile graph drawer */}

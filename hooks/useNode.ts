@@ -34,6 +34,15 @@ export function useNode(bookId: string, nodeNumber: number) {
     setNode(prev => prev ? { ...prev, title } : null)
   }
 
+  const updateIcon = async (icon: string | null) => {
+    await fetch(`/api/nodes/${bookId}/${nodeNumber}/icon`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ icon }),
+    })
+    setNode(prev => prev ? { ...prev, icon } : null)
+  }
+
   const generateTitle = async (): Promise<string | null> => {
     const res = await fetch(`/api/nodes/${bookId}/${nodeNumber}/generate-title`, {
       method: 'POST',
@@ -44,5 +53,5 @@ export function useNode(bookId: string, nodeNumber: number) {
     return title
   }
 
-  return { node, loading, error, updateTitle, generateTitle }
+  return { node, loading, error, updateTitle, updateIcon, generateTitle }
 }
