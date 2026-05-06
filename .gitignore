@@ -34,3 +34,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# uploads (PDF + generated assets)
+/uploads/
+
+# env secrets
+.env
+
+# prisma migrations (env-specific)
+/prisma/migrations/
+
+# Windows metadata streams
+*:Zone.Identifier

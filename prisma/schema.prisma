@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Book {
+  id          String   @id @default(uuid())
+  title       String
+  language    String   @default("fr")
+  status      String   @default("processing")
+  totalNodes  Int      @default(0)
+  introRaw    String?  @db.Text
+  pdfPath     String
+  createdAt   DateTime @default(now())
+
+  nodes         Node[]
+  processingJob ProcessingJob?
+  savegame      Savegame?
+}
+
+model Node {
+  id         String   @id @default(uuid())
+  bookId     String
+  number     Int
+  title      String?
+  summary    String?  @db.Text
+  contentRaw String   @db.Text
+  choices    Json     @default("[]")
+  imageUrl   String?
+  audioUrl   String?
+  isTerminal Boolean  @default(false)
+  endType    String?
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, number])
+  @@index([bookId, number])
+}
+
+model ProcessingJob {
+  id          String   @id @default(uuid())
+  bookId      String   @unique
+  status      String   @default("pending")
+  progress    Int      @default(0)
+  currentStep String?
+  errorMsg    String?
+  updatedAt   DateTime @updatedAt
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+}
+
+model Savegame {
+  id                String   @id @default(uuid())
+  bookId            String   @unique
+  currentNodeNumber Int
+  resumeNodeNumber  Int?
+  visitedNodes      Json     @default("[]")
+  nodeOrder         Json     @default("[]")
+  choicesTaken      Json     @default("{}")
+  checkpoints       Json     @default("[]")
+  updatedAt         DateTime @updatedAt
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+}
+
+model Settings {
+  id            Int     @id @default(1)
+  providerText  String  @default("gemini")
+  providerImage String  @default("gemini")
+  providerAudio String  @default("openai_tts")
+  imagesEnabled Boolean @default(false)
+  audioEnabled  Boolean @default(false)
+}
