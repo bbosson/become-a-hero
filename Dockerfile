@@ -1,10 +1,11 @@
-FROM node:20-alpine AS deps
+# syntax=docker/dockerfile:1
+FROM --platform=$BUILDPLATFORM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 RUN npm ci && npx prisma generate
 
-FROM node:20-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
