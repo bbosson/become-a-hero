@@ -26,8 +26,8 @@
 ### Étape 2 : Créer le premier tag et déclencher le build
 
 ```bash
-git tag v2.0.0
-git push origin v2.0.0
+git tag v3.0.0
+git push origin v3.0.0
 ```
 
 GitHub Actions va :
