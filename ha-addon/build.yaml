@@ -5,5 +5,5 @@ build_from:
 labels:
   org.opencontainers.image.title: "Become a Hero"
   org.opencontainers.image.description: "Livres dont vous êtes le héros interactifs"
-  org.opencontainers.image.source: "https://github.com/GITHUB_USER/become-a-hero"
+  org.opencontainers.image.source: "https://github.com/bbosson/become-a-hero"
   org.opencontainers.image.licenses: "MIT"

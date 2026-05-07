@@ -30,7 +30,7 @@ interface Props {
 export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: Props) {
   const router = useRouter()
   const { node, loading, error, updateTitle, updateIcon, generateTitle } = useNode(bookId, nodeNumber)
-  const { savegame, saveLoading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited } = useSaveGame(bookId)
+  const { savegame, saveLoading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited, goBack, goBackAndForget } = useSaveGame(bookId)
   const { nodes: graphNodes, edges: graphEdges } = useGraphData(savegame, node)
   const [navigating, setNavigating] = useState(false)
   const [layout, setLayout] = useState<LayoutConfig>(DEFAULT_LAYOUT)
@@ -97,6 +97,23 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
     router.push(`/play/${bookId}/1`)
   }, [restart, router, bookId])
 
+  const handleGoBack = useCallback(async () => {
+    if (navigating) return
+    setNavigating(true)
+    const prev = await goBack()
+    if (prev !== null) router.push(`/play/${bookId}/${prev}`)
+    else setNavigating(false)
+  }, [navigating, goBack, router, bookId])
+
+  const handleGoBackAndForget = useCallback(async () => {
+    if (navigating) return
+    setNavigating(true)
+    const prev = await goBackAndForget(nodeNumber)
+    if (prev !== null) router.push(`/play/${bookId}/${prev}`)
+    else setNavigating(false)
+  }, [navigating, goBackAndForget, nodeNumber, router, bookId])
+
+  const canGoBack = !!savegame && savegame.nodeOrder.some(n => n !== savegame.currentNodeNumber)
   const isPinned = savegame?.resumeNodeNumber === nodeNumber
 
   if (loading) {
@@ -202,7 +219,10 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
             <SaveBar
               onPinResume={handlePinResume}
               onAddCheckpoint={handleAddCheckpoint}
+              onGoBack={handleGoBack}
+              onGoBackAndForget={handleGoBackAndForget}
               pinned={isPinned}
+              canGoBack={canGoBack}
             />
           </div>
 

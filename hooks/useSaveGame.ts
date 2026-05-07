@@ -56,7 +56,10 @@ export function useSaveGame(bookId: string) {
       ? sg.visitedNodes
       : [...sg.visitedNodes, nodeNumber]
 
-    const nodeOrder = [...sg.nodeOrder, nodeNumber]
+    const lastInOrder = sg.nodeOrder[sg.nodeOrder.length - 1]
+    const nodeOrder = lastInOrder === nodeNumber
+      ? sg.nodeOrder
+      : [...sg.nodeOrder, nodeNumber]
 
     const choicesTaken = fromNode !== undefined
       ? { ...sg.choicesTaken, [fromNode]: nodeNumber }
@@ -127,5 +130,36 @@ export function useSaveGame(bookId: string) {
     await save({ currentNodeNumber: nodeNumber })
   }, [save])
 
-  return { savegame, saveLoading: loading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited }
+  const findPrevIndex = (sg: SavegameData): number => {
+    const current = sg.currentNodeNumber
+    let i = sg.nodeOrder.length - 1
+    while (i >= 0 && sg.nodeOrder[i] === current) i--
+    return i
+  }
+
+  const goBack = useCallback(async (): Promise<number | null> => {
+    const sg = ref.current
+    if (!sg) return null
+    const prevIndex = findPrevIndex(sg)
+    if (prevIndex < 0) return null
+    const prevNodeNumber = sg.nodeOrder[prevIndex]
+    const nodeOrder = sg.nodeOrder.slice(0, prevIndex + 1)
+    await save({ currentNodeNumber: prevNodeNumber, nodeOrder })
+    return prevNodeNumber
+  }, [save])
+
+  const goBackAndForget = useCallback(async (currentNodeNumber: number): Promise<number | null> => {
+    const sg = ref.current
+    if (!sg) return null
+    const prevIndex = findPrevIndex(sg)
+    if (prevIndex < 0) return null
+    const prevNodeNumber = sg.nodeOrder[prevIndex]
+    const nodeOrder = sg.nodeOrder.slice(0, prevIndex + 1)
+    const visitedNodes = sg.visitedNodes.filter(n => n !== currentNodeNumber)
+    const revealedEdges = (sg.revealedEdges || []).filter(e => e.from !== currentNodeNumber)
+    await save({ currentNodeNumber: prevNodeNumber, nodeOrder, visitedNodes, revealedEdges })
+    return prevNodeNumber
+  }, [save])
+
+  return { savegame, saveLoading: loading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited, goBack, goBackAndForget }
 }

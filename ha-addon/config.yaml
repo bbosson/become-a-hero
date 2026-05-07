@@ -2,12 +2,12 @@ name: "Become a Hero"
 version: "2.0.0"
 slug: "become_a_hero"
 description: "Livres dont vous êtes le héros — lecture interactive avec IA"
-url: "https://github.com/GITHUB_USER/become-a-hero"
+url: "https://github.com/bbosson/become-a-hero"
 arch:
   - aarch64
   - amd64
   - armv7
-image: "ghcr.io/GITHUB_USER/become-a-hero/{arch}"
+image: "ghcr.io/bbosson/become-a-hero/{arch}"
 ingress: true
 ingress_port: 3000
 panel_icon: "mdi:book-open-page-variant"

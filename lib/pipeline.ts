@@ -46,15 +46,19 @@ export async function runPipeline(bookId: string, pdfPath: string, language: 'fr
       contentRaw: string
       choices: Array<{ label: string; targetNodeNumber: number }>
       isTerminal: boolean
+      icon: string | null
     }> = []
 
     for (const [number, contentRaw] of Array.from(nodesMap.entries())) {
       const choices = extractChoices(contentRaw, language)
+      const isTerminal = choices.length === 0
+      const icon = isTerminal && contentRaw.includes('Fin de l\'aventure') ? '💀' : null
       nodesWithChoices.push({
         number,
         contentRaw,
         choices,
-        isTerminal: choices.length === 0,
+        isTerminal,
+        icon,
       })
     }
 
@@ -137,11 +141,13 @@ export async function runPipeline(bookId: string, pdfPath: string, language: 'fr
               contentRaw: node.contentRaw,
               choices: node.choices,
               isTerminal: node.isTerminal,
+              icon: node.icon,
             },
             update: {
               contentRaw: node.contentRaw,
               choices: node.choices,
               isTerminal: node.isTerminal,
+              icon: node.icon,
             },
           })
         )

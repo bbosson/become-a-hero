@@ -3,12 +3,15 @@
 interface Props {
   onPinResume: () => void
   onAddCheckpoint: () => void
+  onGoBack: () => void
+  onGoBackAndForget: () => void
   pinned?: boolean
+  canGoBack?: boolean
 }
 
-export default function SaveBar({ onPinResume, onAddCheckpoint, pinned }: Props) {
+export default function SaveBar({ onPinResume, onAddCheckpoint, onGoBack, onGoBackAndForget, pinned, canGoBack }: Props) {
   return (
-    <div className="flex gap-3 mt-6 pt-4 border-t border-stone-800">
+    <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-stone-800">
       <button
         onClick={onPinResume}
         className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors ${
@@ -29,6 +32,26 @@ export default function SaveBar({ onPinResume, onAddCheckpoint, pinned }: Props)
       >
         <span>🚩</span>
         <span>Checkpoint</span>
+      </button>
+
+      <button
+        onClick={onGoBack}
+        disabled={!canGoBack}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm border border-stone-700/50 text-stone-400 hover:text-emerald-400 hover:border-emerald-700/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        title="Revenir au nœud précédent (la visite de cette scène est conservée)"
+      >
+        <span>⬅️</span>
+        <span>Revenir en arrière</span>
+      </button>
+
+      <button
+        onClick={onGoBackAndForget}
+        disabled={!canGoBack}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm border border-stone-700/50 text-stone-400 hover:text-rose-400 hover:border-rose-700/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        title="Revenir au nœud précédent et marquer cette scène comme non visitée"
+      >
+        <span>🧹</span>
+        <span>Oublier cette scène</span>
       </button>
     </div>
   )
