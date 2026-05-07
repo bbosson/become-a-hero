@@ -14,7 +14,7 @@ export PORT=${PORT:-3000}
 export HOSTNAME="0.0.0.0"
 
 echo "Running Prisma migrations..."
-node_modules/.bin/prisma migrate deploy
+node node_modules/prisma/build/index.js migrate deploy
 
 echo "Starting Next.js..."
 exec node server.js
