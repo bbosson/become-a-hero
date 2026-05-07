@@ -69,6 +69,24 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
 
+  cleanup:
+    name: Cleanup old images (${{ matrix.arch }})
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        arch: [amd64, aarch64]
+    steps:
+      - name: Delete old package versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'become-a-hero/${{ matrix.arch }}'
+          package-type: container
+          min-versions-to-keep: 3
+          token: ${{ secrets.GITHUB_TOKEN }}
+
   update-addon-version:
     name: Update add-on version
     needs: build
