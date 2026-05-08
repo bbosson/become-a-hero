@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import BookGrid from '@/components/library/BookGrid'
 import SettingsDrawer from '@/components/game/SettingsDrawer'
@@ -55,9 +56,9 @@ export default async function HomePage() {
             <p className="text-4xl mb-4">📚</p>
             <p className="text-lg">Aucune aventure pour l&apos;instant.</p>
             <p className="text-sm mt-2">
-              <a href="/upload" className="text-amber-500 hover:text-amber-400 underline">
+              <Link href="/upload" className="text-amber-500 hover:text-amber-400 underline">
                 Importe ton premier PDF
-              </a>{' '}
+              </Link>{' '}
               pour commencer.
             </p>
           </div>
