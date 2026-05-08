@@ -1,8 +1,8 @@
-import Link from 'next/link'
-import { prisma } from '@/lib/db'
-import BookGrid from '@/components/library/BookGrid'
 import SettingsDrawer from '@/components/game/SettingsDrawer'
+import BookGrid from '@/components/library/BookGrid'
+import { prisma } from '@/lib/db'
 import { BookData } from '@/types'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,7 +59,7 @@ export default async function HomePage() {
               <Link href="/upload" className="text-amber-500 hover:text-amber-400 underline">
                 Importe ton premier PDF
               </Link>{' '}
-              pour commencer.
+              pour commencer...
             </p>
           </div>
         ) : (

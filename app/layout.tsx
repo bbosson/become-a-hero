@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -10,9 +11,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr">
       <head>
-        {/* Patch browser history API so Next.js navigation stays inside HA ingress path.
-            Runs before any framework code — same pattern as BonAp's basename detection. */}
-        <script dangerouslySetInnerHTML={{ __html: `
+        <Script
+          id="ha-ingress-patch"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: `
 (function(){
   var m = window.location.pathname.match(/^\\/api\\/hassio_ingress\\/[^\\/]+/);
   if (!m) return;
@@ -33,7 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return origFetch.call(this, input, init);
   };
 })();
-        `}} />
+          `}}
+        />
       </head>
       <body className="antialiased">
         {children}
