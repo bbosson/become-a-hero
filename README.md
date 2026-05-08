@@ -153,7 +153,11 @@ Tout livre-jeu PDF dont les paragraphes sont numérotés et les choix suivent un
 - **Français :** `Rendez-vous au 42`, `Allez au 17`
 - **Anglais :** `Turn to 42`, `Go to 17`, `Proceed to 42`
 
-Séries testées : **Défis Fantastiques** (Fighting Fantasy VF).
+Séries testées sur la suite des livres **Défis Fantastiques** : 
+Livre testés : 
+- Defis Fantastiques 02 - La Citadelle du Chaos
+
+au format PDF
 
 ---
 
@@ -217,10 +221,10 @@ npm run db:studio    # Interface Prisma Studio
 
 ## Contribuer
 
-1. Fork + branche depuis `main`
+1. Fork + branche depuis `master`
 2. `npm run dev` pour développer
 3. Les migrations Prisma se créent avec `npm run db:migrate` (nommez-les explicitement)
-4. PR vers `main` avec description du changement et comportement testé
+4. PR vers `master` avec description du changement et comportement testé
 
 ---
 

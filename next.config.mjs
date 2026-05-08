@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  compress: false,
   experimental: {
     serverComponentsExternalPackages: ['pdf-parse', '@prisma/client'],
   },
