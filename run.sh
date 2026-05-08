@@ -18,11 +18,14 @@ elif command -v bashio &>/dev/null; then
   export ELEVENLABS_API_KEY=$(bashio::config 'elevenlabs_api_key')
 fi
 
-export PORT=${PORT:-3000}
+export PORT=3001
 export HOSTNAME="0.0.0.0"
 
 echo "Running Prisma migrations..."
 node node_modules/prisma/build/index.js migrate deploy
 
-echo "Starting Next.js..."
-exec node server.js
+echo "Starting Next.js on port 3001..."
+node server.js &
+
+echo "Starting nginx on port 3000..."
+exec nginx -g "daemon off;"
