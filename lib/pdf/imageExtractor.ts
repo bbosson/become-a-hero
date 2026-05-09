@@ -49,23 +49,7 @@ export async function extractPdfImages(
 
     // Pass 2 — extract images, strictly between two identified nodes
     const OPS = pdfjsLib.OPS
-    console.log('[imageExtractor] OPS.paintImageXObject =', OPS.paintImageXObject,
-      '| OPS.paintJpegXObject =', OPS.paintJpegXObject,
-      '| OPS.paintInlineImageXObject =', OPS.paintInlineImageXObject)
-
     let prevNode: number | null = null
-    let totalImgOpsFound = 0
-
-    // Diagnostic: scan first 10 pages with images and log all unique OPS found
-    const diagPage = await doc.getPage(34) // page 34 cited by user
-    const diagOps = await diagPage.getOperatorList()
-    const uniqueOps = new Set(diagOps.fnArray)
-    console.log(`[imageExtractor] page 34 ops count=${diagOps.fnArray.length} unique ops=`, [...uniqueOps].sort())
-    const imgOpsOnDiag = diagOps.fnArray.filter((op: number) =>
-      op === OPS.paintImageXObject || op === OPS.paintJpegXObject || op === OPS.paintInlineImageXObject
-    )
-    console.log(`[imageExtractor] page 34 image-related ops count=`, imgOpsOnDiag.length)
-    diagPage.cleanup()
 
     for (let p = 1; p <= doc.numPages; p++) {
       const nodesOnPage = pageNodeMap.get(p) || []
@@ -75,13 +59,12 @@ export async function extractPdfImages(
 
       const imageNames: string[] = []
       for (let i = 0; i < opList.fnArray.length; i++) {
-        // Check paintImageXObject AND paintJpegXObject (JPEG-specific in some pdfjs versions)
-        if (opList.fnArray[i] === OPS.paintImageXObject ||
-            opList.fnArray[i] === OPS.paintJpegXObject) {
+        if (opList.fnArray[i] === OPS.paintImageXObject) {
           const name = opList.argsArray[i][0]
-          if (typeof name === 'string' && !imageNames.includes(name)) {
+          // Skip Form XObjects (g_* prefix) — they wrap images but can't be decoded
+          // without canvas in Node.js; only direct Image XObjects work
+          if (typeof name === 'string' && !name.startsWith('g_') && !imageNames.includes(name)) {
             imageNames.push(name)
-            totalImgOpsFound++
           }
         }
       }
@@ -95,21 +78,12 @@ export async function extractPdfImages(
           Array.from({ length: doc.numPages - p }, (_, i) => p + 1 + i)
             .some(pp => (pageNodeMap.get(pp) || []).length > 0)
 
-        console.log(`[imageExtractor] page ${p}: images=${imageNames.length} targetNode=${targetNode} hasNodeAfter=${hasNodeAfter} prevNode=${prevNode}`)
-
         if (targetNode !== null && hasNodeAfter && !result.has(targetNode)) {
           for (const imgName of imageNames) {
-            console.log(`[imageExtractor] trying to extract ${imgName} for node ${targetNode}...`)
-            const saved = await Promise.race([
-              tryExtractAndSave(page, imgName, nodesDir, bookId, targetNode),
-              new Promise<null>(resolve => setTimeout(() => { console.warn(`[imageExtractor] timeout on ${imgName}`); resolve(null) }, 8000)),
-            ])
+            const saved = await extractWithTimeout(page, imgName, nodesDir, bookId, targetNode)
             if (saved) {
               result.set(targetNode, saved)
-              console.log(`[imageExtractor] saved image for node ${targetNode}: ${saved}`)
               break
-            } else {
-              console.log(`[imageExtractor] tryExtractAndSave returned null for ${imgName}`)
             }
           }
         }
@@ -119,14 +93,41 @@ export async function extractPdfImages(
       page.cleanup()
     }
 
-    console.log(`[imageExtractor] total paintImageXObject ops found across all pages: ${totalImgOpsFound}`)
-
     console.log(`[imageExtractor] extracted ${result.size} images from PDF`)
   } catch (e) {
     console.warn('[imageExtractor] PDF image extraction failed:', e instanceof Error ? e.message : e)
   }
 
   return result
+}
+
+function extractWithTimeout(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  page: any,
+  imgName: string,
+  nodesDir: string,
+  bookId: string,
+  nodeNumber: number
+): Promise<string | null> {
+  return new Promise((resolve) => {
+    let settled = false
+
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true
+        console.warn(`[imageExtractor] timeout extracting ${imgName} for node ${nodeNumber}`)
+        resolve(null)
+      }
+    }, 8000)
+
+    tryExtractAndSave(page, imgName, nodesDir, bookId, nodeNumber).then((res) => {
+      if (!settled) {
+        settled = true
+        clearTimeout(timer)
+        resolve(res)
+      }
+    })
+  })
 }
 
 async function tryExtractAndSave(
