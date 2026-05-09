@@ -34,6 +34,10 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
   const [layout, setLayout] = useState<LayoutConfig>(DEFAULT_LAYOUT)
 
   useEffect(() => {
+    setNavigating(false)
+  }, [nodeNumber])
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem(LAYOUT_KEY)
       if (stored) setLayout(JSON.parse(stored))

@@ -19,8 +19,6 @@ export default function Play() {
   const nodeNum = parseInt(nodeNumber!, 10)
 
   useEffect(() => {
-    if (isNaN(nodeNum)) { setNotFound(true); setLoading(false); return }
-
     Promise.all([
       fetch('/api/books').then(r => r.json()),
       fetch('/api/settings').then(r => r.json()),
@@ -36,7 +34,9 @@ export default function Play() {
         setLoading(false)
       })
       .catch(() => { setNotFound(true); setLoading(false) })
-  }, [bookId, nodeNum])
+  }, [bookId])
+
+  if (!loading && isNaN(nodeNum)) return <Navigate to="/" />
 
   if (loading) return null
   if (notFound || !book || !settings) return <Navigate to="/" />
