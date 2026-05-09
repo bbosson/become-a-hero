@@ -6,7 +6,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 RUN npm ci && npx prisma generate
 
-FROM --platform=$BUILDPLATFORM node:24-alpine AS prod-deps
+FROM node:24-alpine AS prod-deps
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
