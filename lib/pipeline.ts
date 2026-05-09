@@ -13,17 +13,22 @@ async function updateJob(bookId: string, status: string, progress: number, curre
 }
 
 export async function runPipeline(bookId: string, pdfPath: string, language: 'fr' | 'en') {
+  console.log(`[pipeline] start bookId=${bookId} pdfPath=${pdfPath} lang=${language}`)
   try {
     await updateJob(bookId, 'extracting', 5, 'Détection de l\'introduction...')
 
     // Phase 1 — Extract raw text
+    console.log('[pipeline] extracting text from PDF...')
     const rawText = await extractTextFromPdf(pdfPath)
+    console.log(`[pipeline] extracted ${rawText.length} chars`)
     const cleanedText = cleanText(rawText)
 
     await updateJob(bookId, 'extracting', 15, 'Extraction du texte brut...')
 
     // Phase 0 — Split intro and body
+    console.log('[pipeline] splitting intro/body...')
     const { introRaw, body } = splitIntroAndBody(cleanedText)
+    console.log(`[pipeline] introRaw=${introRaw.length} chars, body=${body.length} chars`)
 
     await prisma.book.update({
       where: { id: bookId },
@@ -33,8 +38,10 @@ export async function runPipeline(bookId: string, pdfPath: string, language: 'fr
     await updateJob(bookId, 'parsing', 25, 'Détection des paragraphes...')
 
     // Phase 2 — Detect nodes
+    console.log('[pipeline] parsing nodes...')
     const nodesMap = parseNodes(body)
     const nodeCount = nodesMap.size
+    console.log(`[pipeline] found ${nodeCount} nodes`)
 
     await updateJob(bookId, 'parsing', 45, `Détection des paragraphes (${nodeCount} trouvés)...`)
 
@@ -117,8 +124,11 @@ export async function runPipeline(bookId: string, pdfPath: string, language: 'fr
       validationStatus: orphanTargets.length > 0 ? 'errors' : unreachableNodes.length > 0 ? 'warnings' : 'ok',
     }
 
+    console.log(`[pipeline] validation: orphans=${orphanTargets.length} unreachable=${unreachableNodes.length} terminals=${terminalNodes.length}`)
+
     if (orphanTargets.length > 0) {
       const msg = `Cibles introuvables: ${orphanTargets.slice(0, 7).join(', ')}`
+      console.error('[pipeline] validation failed:', msg)
       await updateJob(bookId, 'error', 60, 'Validation échouée', msg)
       await prisma.book.update({ where: { id: bookId }, data: { status: 'error' } })
       return { success: false, validation }
@@ -176,12 +186,14 @@ export async function runPipeline(bookId: string, pdfPath: string, language: 'fr
       }
     }
 
+    console.log('[pipeline] done')
     await updateJob(bookId, 'done', 100, 'Finalisation...')
     await prisma.book.update({ where: { id: bookId }, data: { status: 'ready' } })
 
     return { success: true, validation }
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[pipeline] FATAL error:', msg, error)
     await updateJob(bookId, 'error', 0, 'Erreur pipeline', msg).catch(() => {})
     await prisma.book.update({ where: { id: bookId }, data: { status: 'error' } }).catch(() => {})
     throw error

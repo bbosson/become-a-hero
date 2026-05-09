@@ -44,22 +44,38 @@ export default function UploadForm() {
 
     try {
       setProgress(30)
+      console.log('[upload] POST /api/upload', { name: file.name, size: file.size })
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
       setProgress(70)
+      console.log('[upload] response status:', res.status, res.headers.get('content-type'))
+
+      const rawText = await res.text()
+      console.log('[upload] response body:', rawText)
 
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Upload échoué')
+        let errMsg = 'Upload échoué'
+        try { errMsg = JSON.parse(rawText).error || errMsg } catch {}
+        throw new Error(errMsg)
       }
 
-      const { jobId } = await res.json()
+      let parsed: { jobId: string }
+      try {
+        parsed = JSON.parse(rawText)
+      } catch (parseErr) {
+        throw new Error(`Réponse invalide du serveur: ${rawText.slice(0, 200)}`)
+      }
+
+      const { jobId } = parsed
       setProgress(100)
+      console.log('[upload] jobId:', jobId)
 
       // Start pipeline
-      await fetch(`/api/process/${jobId}/start`, { method: 'POST' })
+      const startRes = await fetch(`/api/process/${jobId}/start`, { method: 'POST' })
+      console.log('[upload] start status:', startRes.status)
 
       navigate(`/processing/${jobId}`)
     } catch (e) {
+      console.error('[upload] error:', e)
       setError(e instanceof Error ? e.message : 'Erreur inconnue')
       setUploading(false)
       setProgress(0)

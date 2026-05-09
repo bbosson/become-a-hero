@@ -36,9 +36,11 @@ export default function ProcessingStatus({ jobId }: Props) {
   const navigate = useNavigate()
 
   useEffect(() => {
+    console.log('[sse] connecting to /api/process/' + jobId)
     const es = new EventSource(`/api/process/${jobId}`)
 
     es.onmessage = (event) => {
+      console.log('[sse] message:', event.data)
       const data = JSON.parse(event.data)
       setState(data)
 
@@ -50,7 +52,8 @@ export default function ProcessingStatus({ jobId }: Props) {
       }
     }
 
-    es.onerror = () => {
+    es.onerror = (err) => {
+      console.error('[sse] error:', err, 'readyState:', es.readyState)
       es.close()
     }
 
