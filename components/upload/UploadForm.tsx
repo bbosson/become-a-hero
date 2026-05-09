@@ -1,7 +1,5 @@
-'use client'
-
 import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 
 export default function UploadForm() {
   const [file, setFile] = useState<File | null>(null)
@@ -11,7 +9,7 @@ export default function UploadForm() {
   const [error, setError] = useState('')
   const [progress, setProgress] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
-  const router = useRouter()
+  const navigate = useNavigate()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
@@ -60,7 +58,7 @@ export default function UploadForm() {
       // Start pipeline
       await fetch(`/api/process/${jobId}/start`, { method: 'POST' })
 
-      router.push(`/processing/${jobId}`)
+      navigate(`/processing/${jobId}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur inconnue')
       setUploading(false)

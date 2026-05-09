@@ -1,8 +1,9 @@
 import fs from 'fs'
 
 export async function extractTextFromPdf(pdfPath: string): Promise<string> {
+  // pdf-parse wrapper tries to fetch V8 inspector endpoint → JSON.parse error; use lib directly
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pdfParse = require('pdf-parse')
+  const pdfParse = require('pdf-parse/lib/pdf-parse.js')
   const buffer = fs.readFileSync(pdfPath)
   const data = await pdfParse(buffer)
   return data.text

@@ -1,11 +1,10 @@
-'use client'
-
 import { useState } from 'react'
 import { BookData, Checkpoint } from '@/types'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 
 interface Props {
   book: BookData
+  onRefresh?: () => void
 }
 
 function getBookStatus(book: BookData): 'new' | 'in_progress' | 'finished' {
@@ -16,8 +15,8 @@ function getBookStatus(book: BookData): 'new' | 'in_progress' | 'finished' {
   return 'new'
 }
 
-export default function BookCard({ book }: Props) {
-  const router = useRouter()
+export default function BookCard({ book, onRefresh }: Props) {
+  const navigate = useNavigate()
   const status = getBookStatus(book)
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetting, setResetting] = useState(false)
@@ -35,16 +34,16 @@ export default function BookCard({ book }: Props) {
   const handlePlay = () => {
     if (book.status !== 'ready') return
     if (status === 'in_progress' && book.savegame) {
-      router.push(`/play/${book.id}/${resumeNode}`)
+      navigate(`/play/${book.id}/${resumeNode}`)
     } else {
-      router.push(`/play/${book.id}/intro`)
+      navigate(`/play/${book.id}/intro`)
     }
   }
 
   const handleReset = async () => {
     setResetting(true)
     await fetch(`/api/savegame/${book.id}`, { method: 'DELETE' })
-    router.refresh()
+    onRefresh?.()
     setResetting(false)
     setConfirmReset(false)
   }
@@ -142,7 +141,7 @@ export default function BookCard({ book }: Props) {
               {checkpoints.map((cp) => (
                 <button
                   key={cp.nodeNumber}
-                  onClick={() => router.push(`/play/${book.id}/${cp.nodeNumber}`)}
+                  onClick={() => navigate(`/play/${book.id}/${cp.nodeNumber}`)}
                   className="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-stone-400 hover:text-amber-300 hover:bg-stone-800/60 transition-colors text-left"
                 >
                   <span>🚩</span>

@@ -1,7 +1,5 @@
-'use client'
-
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 
 interface JobState {
   status: string
@@ -35,7 +33,7 @@ export default function ProcessingStatus({ jobId }: Props) {
     bookId: null,
     totalNodes: 0,
   })
-  const router = useRouter()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const es = new EventSource(`/api/process/${jobId}`)
@@ -125,7 +123,7 @@ export default function ProcessingStatus({ jobId }: Props) {
           <div className="flex gap-3">
             {state.bookId && (
               <button
-                onClick={() => router.push(`/play/${state.bookId}/intro`)}
+                onClick={() => navigate(`/play/${state.bookId}/intro`)}
                 className="flex-1 py-2 px-4 rounded-lg border border-amber-700/50 text-amber-400 hover:bg-amber-900/20 text-sm transition-colors"
               >
                 Lire l&apos;introduction
@@ -133,7 +131,7 @@ export default function ProcessingStatus({ jobId }: Props) {
             )}
             {state.bookId && (
               <button
-                onClick={() => router.push(`/play/${state.bookId}/1`)}
+                onClick={() => navigate(`/play/${state.bookId}/1`)}
                 className="flex-1 py-2 px-4 rounded-lg bg-amber-700 hover:bg-amber-600 text-white text-sm font-medium transition-colors"
               >
                 Lancer la partie !
@@ -152,14 +150,14 @@ export default function ProcessingStatus({ jobId }: Props) {
           )}
           <div className="flex gap-3">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => navigate('/')}
               className="flex-1 py-2 px-4 rounded-lg border border-stone-700 text-stone-300 text-sm hover:bg-stone-800 transition-colors"
             >
               Retour
             </button>
             {state.bookId && (
               <button
-                onClick={() => router.push(`/play/${state.bookId}/1`)}
+                onClick={() => navigate(`/play/${state.bookId}/1`)}
                 className="flex-1 py-2 px-4 rounded-lg border border-amber-800/50 text-amber-400 text-sm hover:bg-amber-900/20 transition-colors"
               >
                 Forcer le lancement

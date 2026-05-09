@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-# HA add-on: /data/options.json is injected by HA regardless of base image
 if [ -f /data/options.json ]; then
   echo "Using /data/options.json..."
   export DATABASE_URL=$(node -e "process.stdout.write(require('/data/options.json').database_url||'')")
@@ -18,14 +17,13 @@ elif command -v bashio &>/dev/null; then
   export ELEVENLABS_API_KEY=$(bashio::config 'elevenlabs_api_key')
 fi
 
-export PORT=3001
-export HOSTNAME="0.0.0.0"
+export API_PORT=3001
 
 echo "Running Prisma migrations..."
 node node_modules/prisma/build/index.js migrate deploy
 
-echo "Starting Next.js on port 3001..."
-node server.js &
+echo "Starting Express on port 3001..."
+node node_modules/.bin/tsx --tsconfig tsconfig.server.json server/index.ts &
 
 echo "Starting nginx on port 3000..."
 exec nginx -g "daemon off;"

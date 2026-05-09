@@ -1,0 +1,43 @@
+import { Router } from 'express'
+import { prisma } from '../../lib/db'
+
+const router = Router()
+
+router.get('/:bookId', async (req, res) => {
+  const savegame = await prisma.savegame.findUnique({ where: { bookId: req.params.bookId } })
+  res.json(savegame)
+})
+
+router.put('/:bookId', async (req, res) => {
+  const body = req.body
+  const savegame = await prisma.savegame.upsert({
+    where: { bookId: req.params.bookId },
+    create: {
+      bookId: req.params.bookId,
+      currentNodeNumber: body.currentNodeNumber,
+      resumeNodeNumber: body.resumeNodeNumber ?? null,
+      visitedNodes: body.visitedNodes ?? [],
+      nodeOrder: body.nodeOrder ?? [],
+      choicesTaken: body.choicesTaken ?? {},
+      checkpoints: body.checkpoints ?? [],
+      revealedEdges: body.revealedEdges ?? [],
+    },
+    update: {
+      currentNodeNumber: body.currentNodeNumber,
+      resumeNodeNumber: body.resumeNodeNumber ?? null,
+      visitedNodes: body.visitedNodes ?? [],
+      nodeOrder: body.nodeOrder ?? [],
+      choicesTaken: body.choicesTaken ?? {},
+      checkpoints: body.checkpoints ?? [],
+      revealedEdges: body.revealedEdges ?? [],
+    },
+  })
+  res.json(savegame)
+})
+
+router.delete('/:bookId', async (req, res) => {
+  await prisma.savegame.deleteMany({ where: { bookId: req.params.bookId } })
+  res.json({ ok: true })
+})
+
+export default router

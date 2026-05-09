@@ -1,7 +1,5 @@
-'use client'
-
 import { useCallback, useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { useNode } from '@/hooks/useNode'
 import { useSaveGame } from '@/hooks/useSaveGame'
 import { useGraphData } from '@/hooks/useGraphData'
@@ -18,7 +16,7 @@ import GraphDrawer from '@/components/graph/GraphDrawer'
 import SettingsDrawer from './SettingsDrawer'
 import LayoutPicker, { LayoutConfig, DEFAULT_LAYOUT, LAYOUT_KEY } from './LayoutPicker'
 import { SettingsData } from '@/types'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 
 interface Props {
   bookId: string
@@ -28,7 +26,7 @@ interface Props {
 }
 
 export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: Props) {
-  const router = useRouter()
+  const navigate = useNavigate()
   const { node, loading, error, updateTitle, updateIcon, generateTitle } = useNode(bookId, nodeNumber)
   const { savegame, saveLoading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited, goBack, goBackAndForget } = useSaveGame(bookId)
   const { nodes: graphNodes, edges: graphEdges } = useGraphData(savegame, node)
@@ -64,20 +62,20 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
     setNavigating(true)
     // Passe les choix du nœud courant pour les enregistrer comme arêtes révélées
     await navigateTo(targetNodeNumber, nodeNumber, node?.choices)
-    router.push(`/play/${bookId}/${targetNodeNumber}`)
-  }, [navigating, navigateTo, nodeNumber, node, router, bookId])
+    navigate(`/play/${bookId}/${targetNodeNumber}`)
+  }, [navigating, navigateTo, nodeNumber, node, navigate, bookId])
 
   const handleGraphNodeClick = useCallback((num: number) => {
     if (navigating) return
     navigateTo(num)
-    router.push(`/play/${bookId}/${num}`)
-  }, [navigating, navigateTo, router, bookId])
+    navigate(`/play/${bookId}/${num}`)
+  }, [navigating, navigateTo, navigate, bookId])
 
   const handleCheckpointClick = useCallback((num: number) => {
     if (navigating) return
     navigateTo(num)
-    router.push(`/play/${bookId}/${num}`)
-  }, [navigating, navigateTo, router, bookId])
+    navigate(`/play/${bookId}/${num}`)
+  }, [navigating, navigateTo, navigate, bookId])
 
   const handleRemoveCheckpoint = useCallback((num: number) => {
     removeCheckpoint(num)
@@ -94,24 +92,24 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
 
   const handleRestart = useCallback(async () => {
     await restart()
-    router.push(`/play/${bookId}/1`)
-  }, [restart, router, bookId])
+    navigate(`/play/${bookId}/1`)
+  }, [restart, navigate, bookId])
 
   const handleGoBack = useCallback(async () => {
     if (navigating) return
     setNavigating(true)
     const prev = await goBack()
-    if (prev !== null) router.push(`/play/${bookId}/${prev}`)
+    if (prev !== null) navigate(`/play/${bookId}/${prev}`)
     else setNavigating(false)
-  }, [navigating, goBack, router, bookId])
+  }, [navigating, goBack, navigate, bookId])
 
   const handleGoBackAndForget = useCallback(async () => {
     if (navigating) return
     setNavigating(true)
     const prev = await goBackAndForget(nodeNumber)
-    if (prev !== null) router.push(`/play/${bookId}/${prev}`)
+    if (prev !== null) navigate(`/play/${bookId}/${prev}`)
     else setNavigating(false)
-  }, [navigating, goBackAndForget, nodeNumber, router, bookId])
+  }, [navigating, goBackAndForget, nodeNumber, navigate, bookId])
 
   const canGoBack = !!savegame && savegame.nodeOrder.some(n => n !== savegame.currentNodeNumber)
   const isPinned = savegame?.resumeNodeNumber === nodeNumber
@@ -128,7 +126,7 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
     return (
       <div className="flex flex-col items-center gap-4 h-64 justify-center">
         <p className="text-red-400">Paragraphe introuvable</p>
-        <Link href={`/play/${bookId}/1`} className="text-amber-400 underline text-sm">
+        <Link to={`/play/${bookId}/1`} className="text-amber-400 underline text-sm">
           Retour au paragraphe 1
         </Link>
       </div>
@@ -140,7 +138,7 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
       {/* Header */}
       <header className="border-b border-amber-900/20 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2 text-amber-500 hover:text-amber-400 transition-colors" title="Bibliothèque">
+          <Link to="/" className="flex items-center gap-2 text-amber-500 hover:text-amber-400 transition-colors" title="Bibliothèque">
             <span className="text-lg">⚔</span>
             <span className="text-xs text-stone-500 hover:text-stone-400 hidden sm:inline">← Bibliothèque</span>
           </Link>
