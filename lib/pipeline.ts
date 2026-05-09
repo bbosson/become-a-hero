@@ -171,7 +171,26 @@ export async function runPipeline(bookId: string, pdfPath: string, language: 'fr
       data: { totalNodes: nodeCount },
     })
 
-    // Phase 5 — LLM analysis (optional)
+    // Phase 5 — Extract PDF illustrations
+    await updateJob(bookId, 'analyzing', 80, 'Extraction des illustrations PDF...')
+    try {
+      const { extractPdfImages } = await import('./pdf/imageExtractor')
+      const validNodeNumbers = new Set(nodesWithChoices.map(n => n.number))
+      const imageMap = await extractPdfImages(pdfPath, bookId, validNodeNumbers)
+      if (imageMap.size > 0) {
+        for (const [nodeNumber, imageUrl] of imageMap) {
+          await prisma.node.update({
+            where: { bookId_number: { bookId, number: nodeNumber } },
+            data: { imageUrl },
+          })
+        }
+        console.log(`[pipeline] saved ${imageMap.size} PDF illustrations to DB`)
+      }
+    } catch (e) {
+      console.warn('[pipeline] PDF image extraction failed (non-blocking):', e instanceof Error ? e.message : e)
+    }
+
+    // Phase 6 — LLM analysis (optional)
     const settings = await prisma.settings.findFirst()
     const hasLLM = settings?.providerText === 'gemini'
       ? !!process.env.GEMINI_API_KEY

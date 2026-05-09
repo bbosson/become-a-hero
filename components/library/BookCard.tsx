@@ -20,6 +20,8 @@ export default function BookCard({ book, onRefresh }: Props) {
   const status = getBookStatus(book)
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const resumeNode = book.savegame?.resumeNodeNumber || book.savegame?.currentNodeNumber || 1
   const checkpoints: Checkpoint[] = (book.savegame?.checkpoints as Checkpoint[]) || []
@@ -48,6 +50,40 @@ export default function BookCard({ book, onRefresh }: Props) {
     setConfirmReset(false)
   }
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    await fetch(`/api/books/${book.id}`, { method: 'DELETE' })
+    onRefresh?.()
+    setDeleting(false)
+    setConfirmDelete(false)
+  }
+
+  const DeleteButton = () => confirmDelete ? (
+    <div className="flex items-center gap-2 w-full">
+      <span className="text-xs text-stone-400 flex-1">Supprimer définitivement ?</span>
+      <button
+        onClick={handleDelete}
+        disabled={deleting}
+        className="text-xs px-2 py-1 rounded bg-red-900/50 text-red-400 hover:bg-red-900/80 border border-red-800/50 transition-colors disabled:opacity-40"
+      >
+        {deleting ? '...' : 'Supprimer'}
+      </button>
+      <button
+        onClick={() => setConfirmDelete(false)}
+        className="text-xs px-2 py-1 rounded text-stone-500 hover:text-stone-300 transition-colors"
+      >
+        Annuler
+      </button>
+    </div>
+  ) : (
+    <button
+      onClick={() => setConfirmDelete(true)}
+      className="text-xs text-stone-600 hover:text-red-400 transition-colors"
+    >
+      🗑 Supprimer l&apos;histoire
+    </button>
+  )
+
   if (book.status === 'processing') {
     return (
       <div className="rounded-xl border border-amber-800/20 bg-stone-900/40 p-5 flex flex-col gap-3 opacity-70">
@@ -56,6 +92,7 @@ export default function BookCard({ book, onRefresh }: Props) {
         </div>
         <h3 className="font-semibold text-stone-200 truncate">{book.title}</h3>
         <span className="text-xs text-amber-400">Analyse en cours...</span>
+        <div className="flex items-center justify-end"><DeleteButton /></div>
       </div>
     )
   }
@@ -66,6 +103,7 @@ export default function BookCard({ book, onRefresh }: Props) {
         <div className="h-32 bg-stone-800 rounded-lg flex items-center justify-center text-red-400 text-2xl">✗</div>
         <h3 className="font-semibold text-stone-200 truncate">{book.title}</h3>
         <span className="text-xs text-red-400">Erreur d&apos;analyse</span>
+        <div className="flex items-center justify-end"><DeleteButton /></div>
       </div>
     )
   }
@@ -132,6 +170,11 @@ export default function BookCard({ book, onRefresh }: Props) {
             )}
           </div>
         )}
+
+        {/* Delete book */}
+        <div className="flex items-center justify-end pt-1 border-t border-stone-800/60">
+          <DeleteButton />
+        </div>
 
         {/* Checkpoints */}
         {checkpoints.length > 0 && (

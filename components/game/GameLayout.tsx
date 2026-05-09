@@ -32,6 +32,7 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
   const { nodes: graphNodes, edges: graphEdges } = useGraphData(savegame, node)
   const [navigating, setNavigating] = useState(false)
   const [layout, setLayout] = useState<LayoutConfig>(DEFAULT_LAYOUT)
+  const [jumpNode, setJumpNode] = useState('')
 
   useEffect(() => {
     setNavigating(false)
@@ -115,6 +116,14 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
     else setNavigating(false)
   }, [navigating, goBackAndForget, nodeNumber, navigate, bookId])
 
+  const handleJumpToNode = () => {
+    const num = parseInt(jumpNode, 10)
+    if (!isNaN(num) && num > 0) {
+      navigate(`/play/${bookId}/${num}`)
+      setJumpNode('')
+    }
+  }
+
   const canGoBack = !!savegame && savegame.nodeOrder.some(n => n !== savegame.currentNodeNumber)
   const isPinned = savegame?.resumeNodeNumber === nodeNumber
 
@@ -150,6 +159,24 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
           <span className="text-stone-300 text-sm hidden sm:block truncate max-w-48">{bookTitle}</span>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min={1}
+              value={jumpNode}
+              onChange={e => setJumpNode(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleJumpToNode()}
+              placeholder="§…"
+              className="w-14 bg-stone-800 text-stone-300 text-xs rounded px-2 py-1 border border-stone-700 focus:outline-none focus:border-amber-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <button
+              onClick={handleJumpToNode}
+              className="text-xs text-stone-500 hover:text-amber-400 transition-colors px-1"
+              title="Aller au paragraphe"
+            >
+              →
+            </button>
+          </div>
           <LayoutPicker layout={layout} onChange={updateLayout} />
           <SettingsDrawer />
         </div>
