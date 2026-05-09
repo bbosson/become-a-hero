@@ -49,7 +49,23 @@ export async function extractPdfImages(
 
     // Pass 2 — extract images, strictly between two identified nodes
     const OPS = pdfjsLib.OPS
+    console.log('[imageExtractor] OPS.paintImageXObject =', OPS.paintImageXObject,
+      '| OPS.paintJpegXObject =', OPS.paintJpegXObject,
+      '| OPS.paintInlineImageXObject =', OPS.paintInlineImageXObject)
+
     let prevNode: number | null = null
+    let totalImgOpsFound = 0
+
+    // Diagnostic: scan first 10 pages with images and log all unique OPS found
+    const diagPage = await doc.getPage(34) // page 34 cited by user
+    const diagOps = await diagPage.getOperatorList()
+    const uniqueOps = new Set(diagOps.fnArray)
+    console.log(`[imageExtractor] page 34 ops count=${diagOps.fnArray.length} unique ops=`, [...uniqueOps].sort())
+    const imgOpsOnDiag = diagOps.fnArray.filter((op: number) =>
+      op === OPS.paintImageXObject || op === OPS.paintJpegXObject || op === OPS.paintInlineImageXObject
+    )
+    console.log(`[imageExtractor] page 34 image-related ops count=`, imgOpsOnDiag.length)
+    diagPage.cleanup()
 
     for (let p = 1; p <= doc.numPages; p++) {
       const nodesOnPage = pageNodeMap.get(p) || []
@@ -59,31 +75,41 @@ export async function extractPdfImages(
 
       const imageNames: string[] = []
       for (let i = 0; i < opList.fnArray.length; i++) {
-        if (opList.fnArray[i] === OPS.paintImageXObject) {
+        // Check paintImageXObject AND paintJpegXObject (JPEG-specific in some pdfjs versions)
+        if (opList.fnArray[i] === OPS.paintImageXObject ||
+            opList.fnArray[i] === OPS.paintJpegXObject) {
           const name = opList.argsArray[i][0]
           if (typeof name === 'string' && !imageNames.includes(name)) {
             imageNames.push(name)
+            totalImgOpsFound++
           }
         }
       }
 
       if (imageNames.length > 0) {
-        // Node that "owns" this image: last node seen on this page or the preceding one
         const targetNode = nodesOnPage.length > 0
           ? nodesOnPage[nodesOnPage.length - 1]
           : prevNode
 
-        // Verify there is a node AFTER this image in the document
         const hasNodeAfter = nodesOnPage.length >= 2 ||
           Array.from({ length: doc.numPages - p }, (_, i) => p + 1 + i)
             .some(pp => (pageNodeMap.get(pp) || []).length > 0)
 
+        console.log(`[imageExtractor] page ${p}: images=${imageNames.length} targetNode=${targetNode} hasNodeAfter=${hasNodeAfter} prevNode=${prevNode}`)
+
         if (targetNode !== null && hasNodeAfter && !result.has(targetNode)) {
           for (const imgName of imageNames) {
-            const saved = await tryExtractAndSave(page, imgName, nodesDir, bookId, targetNode)
+            console.log(`[imageExtractor] trying to extract ${imgName} for node ${targetNode}...`)
+            const saved = await Promise.race([
+              tryExtractAndSave(page, imgName, nodesDir, bookId, targetNode),
+              new Promise<null>(resolve => setTimeout(() => { console.warn(`[imageExtractor] timeout on ${imgName}`); resolve(null) }, 8000)),
+            ])
             if (saved) {
               result.set(targetNode, saved)
+              console.log(`[imageExtractor] saved image for node ${targetNode}: ${saved}`)
               break
+            } else {
+              console.log(`[imageExtractor] tryExtractAndSave returned null for ${imgName}`)
             }
           }
         }
@@ -92,6 +118,8 @@ export async function extractPdfImages(
       if (nodesOnPage.length > 0) prevNode = nodesOnPage[nodesOnPage.length - 1]
       page.cleanup()
     }
+
+    console.log(`[imageExtractor] total paintImageXObject ops found across all pages: ${totalImgOpsFound}`)
 
     console.log(`[imageExtractor] extracted ${result.size} images from PDF`)
   } catch (e) {
