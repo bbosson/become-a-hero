@@ -10,32 +10,37 @@ router.get('/:bookId', async (req, res) => {
 
 router.put('/:bookId', async (req, res) => {
   const body = req.body
-  const savegame = await prisma.savegame.upsert({
-    where: { bookId: req.params.bookId },
-    create: {
-      bookId: req.params.bookId,
-      currentNodeNumber: body.currentNodeNumber,
-      resumeNodeNumber: body.resumeNodeNumber ?? null,
-      visitedNodes: body.visitedNodes ?? [],
-      nodeOrder: body.nodeOrder ?? [],
-      choicesTaken: body.choicesTaken ?? {},
-      checkpoints: body.checkpoints ?? [],
-      revealedEdges: body.revealedEdges ?? [],
-      stats: body.stats ?? null,
-      combatLog: body.combatLog ?? [],
-    },
-    update: {
-      currentNodeNumber: body.currentNodeNumber,
-      resumeNodeNumber: body.resumeNodeNumber ?? null,
-      visitedNodes: body.visitedNodes ?? [],
-      nodeOrder: body.nodeOrder ?? [],
-      choicesTaken: body.choicesTaken ?? {},
-      checkpoints: body.checkpoints ?? [],
-      revealedEdges: body.revealedEdges ?? [],
-      stats: body.stats ?? null,
-      combatLog: body.combatLog ?? [],
-    },
-  })
+  const bookId = req.params.bookId
+
+  const fields = {
+    currentNodeNumber: body.currentNodeNumber,
+    resumeNodeNumber: body.resumeNodeNumber ?? null,
+    visitedNodes: body.visitedNodes ?? [],
+    nodeOrder: body.nodeOrder ?? [],
+    choicesTaken: body.choicesTaken ?? {},
+    checkpoints: body.checkpoints ?? [],
+    revealedEdges: body.revealedEdges ?? [],
+    stats: body.stats ?? null,
+    combatLog: body.combatLog ?? [],
+  }
+
+  // Upsert with retry on MariaDB 1020 (concurrent modification race)
+  let savegame
+  try {
+    savegame = await prisma.savegame.upsert({
+      where: { bookId },
+      create: { bookId, ...fields },
+      update: fields,
+    })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    if (msg.includes('1020') || msg.includes('Record has changed')) {
+      savegame = await prisma.savegame.update({ where: { bookId }, data: fields })
+    } else {
+      throw e
+    }
+  }
+
   res.json(savegame)
 })
 
