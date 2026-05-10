@@ -28,7 +28,9 @@ export async function extractPdfImages(
     }).promise
 
     const nodesDir = resolveUploadDir(bookId, 'nodes')
+    console.log(`[imageExtractor] UPLOAD_DIR=${process.env.UPLOAD_DIR || '(not set, fallback ./uploads)'} → nodesDir=${nodesDir}`)
     fs.mkdirSync(nodesDir, { recursive: true })
+    console.log(`[imageExtractor] directory created: ${nodesDir}`)
 
     // Pass 1 — collect node numbers per page (text only, fast)
     const pageNodeMap = new Map<number, number[]>()
@@ -78,12 +80,17 @@ export async function extractPdfImages(
           Array.from({ length: doc.numPages - p }, (_, i) => p + 1 + i)
             .some(pp => (pageNodeMap.get(pp) || []).length > 0)
 
+        console.log(`[imageExtractor] page ${p}: images=${imageNames.join(',')} targetNode=${targetNode} hasNodeAfter=${hasNodeAfter} alreadySaved=${targetNode !== null && result.has(targetNode)}`)
+
         if (targetNode !== null && hasNodeAfter && !result.has(targetNode)) {
           for (const imgName of imageNames) {
             const saved = await extractWithTimeout(page, imgName, nodesDir, bookId, targetNode)
             if (saved) {
+              console.log(`[imageExtractor] ✓ saved node ${targetNode} → ${saved}`)
               result.set(targetNode, saved)
               break
+            } else {
+              console.warn(`[imageExtractor] ✗ failed/timeout for ${imgName} node ${targetNode}`)
             }
           }
         }
@@ -148,11 +155,13 @@ async function tryExtractAndSave(
         }
 
         const { width, height, data, kind } = imgData
+        console.log(`[imageExtractor] img ${imgName} node ${nodeNumber}: ${width}x${height} kind=${kind} dataLen=${data.length}`)
 
         let channels: number
         if (kind === ImageKind.RGBA_32BPP || data.length === width * height * 4) channels = 4
         else if (kind === ImageKind.RGB_24BPP || data.length === width * height * 3) channels = 3
         else {
+          console.warn(`[imageExtractor] unsupported format node ${nodeNumber}: kind=${kind} dataLen=${data.length} expected=${width * height * 3} or ${width * height * 4}`)
           resolve(null)
           return
         }
@@ -161,12 +170,14 @@ async function tryExtractAndSave(
           // eslint-disable-next-line @typescript-eslint/no-require-imports
           const sharp = require('sharp')
           const imgPath = path.join(nodesDir, `${nodeNumber}.jpg`)
+          console.log(`[imageExtractor] writing ${imgPath} (${channels}ch ${width}x${height})`)
           await sharp(Buffer.from(data), { raw: { width, height, channels } })
             .jpeg({ quality: 85 })
             .toFile(imgPath)
+          console.log(`[imageExtractor] write OK: ${imgPath}`)
           resolve(`/uploads/${bookId}/nodes/${nodeNumber}.jpg`)
         } catch (e) {
-          console.warn(`[imageExtractor] save failed node ${nodeNumber}:`, e instanceof Error ? e.message : e)
+          console.warn(`[imageExtractor] sharp failed node ${nodeNumber}: ${e instanceof Error ? e.message : e}`)
           resolve(null)
         }
       })
