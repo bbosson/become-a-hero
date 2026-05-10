@@ -19,7 +19,8 @@ app.use('/api/nodes', nodesRouter)
 app.use('/api/savegame', savegameRouter)
 app.use('/api/process', processRouter)
 
-// Serve uploaded files (images, audio, PDFs)
+// Serve uploaded files — /uploads/ for prod (nginx alias) and dev proxy; /api/uploads/ kept for compat
+app.use('/uploads', express.static(resolveUploadDir()))
 app.use('/api/uploads', express.static(resolveUploadDir()))
 
 app.listen(PORT, '0.0.0.0', () => {

@@ -41,7 +41,7 @@ export default function NodeImage({ bookId, nodeNumber, imageUrl: initialUrl, im
 
   if (!url) return null
 
-  const src = url.startsWith('/uploads/') ? `/api${url}` : url
+  const src = url
 
   return (
     <>
