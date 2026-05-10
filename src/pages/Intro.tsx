@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Navigate, Link } from 'react-router-dom'
+import StatsSetup from '@/components/intro/StatsSetup'
 
 interface Book {
   id: string
@@ -56,14 +57,7 @@ export default function Intro() {
           <p className="text-stone-500 italic text-center">Aucune introduction détectée pour ce livre.</p>
         )}
 
-        <div className="flex justify-center pt-6">
-          <Link
-            to={`/play/${book.id}/1`}
-            className="py-3 px-8 rounded-lg bg-amber-700 hover:bg-amber-600 text-white font-medium text-lg transition-colors"
-          >
-            Commencer l&apos;aventure →
-          </Link>
-        </div>
+        <StatsSetup bookId={book.id} />
       </main>
     </div>
   )

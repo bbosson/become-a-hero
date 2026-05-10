@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { SavegameData, Checkpoint, Choice, RevealedEdge } from '@/types'
+import { SavegameData, Checkpoint, Choice, RevealedEdge, PlayerStats, CombatEntry } from '@/types'
 
 export function useSaveGame(bookId: string) {
   const [savegame, setSavegame] = useState<SavegameData | null>(null)
@@ -161,5 +161,60 @@ export function useSaveGame(bookId: string) {
     return prevNodeNumber
   }, [save])
 
-  return { savegame, saveLoading: loading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited, goBack, goBackAndForget }
+  const setStats = useCallback(async (stats: PlayerStats) => {
+    await save({ stats })
+  }, [save])
+
+  const updateStats = useCallback(async (patch: Partial<PlayerStats>) => {
+    const sg = ref.current
+    if (!sg?.stats) return
+    await save({ stats: { ...sg.stats, ...patch } })
+  }, [save])
+
+  const eatProvision = useCallback(async () => {
+    const sg = ref.current
+    if (!sg?.stats) return
+    const { provisions, endurance, enduranceInit } = sg.stats
+    if (provisions <= 0) return
+    await save({
+      stats: {
+        ...sg.stats,
+        provisions: provisions - 1,
+        endurance: Math.min(endurance + 4, enduranceInit),
+      },
+    })
+  }, [save])
+
+  const testLuck = useCallback(async (): Promise<{ lucky: boolean; roll: number } | null> => {
+    const sg = ref.current
+    if (!sg?.stats) return null
+    const { chance } = sg.stats
+    const d1 = Math.floor(Math.random() * 6) + 1
+    const d2 = Math.floor(Math.random() * 6) + 1
+    const roll = d1 + d2
+    const lucky = roll <= chance
+    await save({ stats: { ...sg.stats, chance: Math.max(0, chance - 1) } })
+    return { lucky, roll }
+  }, [save])
+
+  const saveCombat = useCallback(async (entry: CombatEntry) => {
+    const sg = ref.current
+    if (!sg) return
+    const existing = (sg.combatLog || []).findIndex(c => c.id === entry.id)
+    const combatLog = existing >= 0
+      ? sg.combatLog.map(c => c.id === entry.id ? entry : c)
+      : [...(sg.combatLog || []), entry]
+    const update: Partial<SavegameData> = { combatLog }
+    if (sg.stats && entry.heroEnduranceEnd !== undefined) {
+      update.stats = { ...sg.stats, endurance: entry.heroEnduranceEnd }
+    }
+    await save(update)
+  }, [save])
+
+  return {
+    savegame, saveLoading: loading,
+    navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint,
+    restart, isVisited, goBack, goBackAndForget,
+    setStats, updateStats, eatProvision, testLuck, saveCombat,
+  }
 }

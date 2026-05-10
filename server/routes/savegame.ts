@@ -21,6 +21,8 @@ router.put('/:bookId', async (req, res) => {
       choicesTaken: body.choicesTaken ?? {},
       checkpoints: body.checkpoints ?? [],
       revealedEdges: body.revealedEdges ?? [],
+      stats: body.stats ?? null,
+      combatLog: body.combatLog ?? [],
     },
     update: {
       currentNodeNumber: body.currentNodeNumber,
@@ -30,6 +32,8 @@ router.put('/:bookId', async (req, res) => {
       choicesTaken: body.choicesTaken ?? {},
       checkpoints: body.checkpoints ?? [],
       revealedEdges: body.revealedEdges ?? [],
+      stats: body.stats ?? null,
+      combatLog: body.combatLog ?? [],
     },
   })
   res.json(savegame)

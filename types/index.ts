@@ -36,6 +36,42 @@ export interface RevealedEdge {
   to: number
 }
 
+export interface PlayerStats {
+  habilite: number
+  habiliteInit: number
+  endurance: number
+  enduranceInit: number
+  chance: number
+  chanceInit: number
+  magie?: number
+  magieInit?: number
+  provisions: number
+  gold: number
+}
+
+export interface CombatRound {
+  heroRoll: [number, number]
+  monsterRoll: [number, number]
+  heroAttack: number
+  monsterAttack: number
+  result: 'hero_hit' | 'monster_hit' | 'tie'
+  heroEnduranceAfter: number
+  monsterEnduranceAfter: number
+  luckTest?: { roll: number; lucky: boolean; damageModifier: number }
+}
+
+export interface CombatEntry {
+  id: string
+  nodeNumber: number
+  monsterName: string
+  monsterHabiliteInit: number
+  monsterEnduranceInit: number
+  rounds: CombatRound[]
+  outcome: 'victory' | 'defeat' | 'escaped' | 'ongoing'
+  heroEnduranceStart: number
+  heroEnduranceEnd?: number
+}
+
 export interface SavegameData {
   id: string
   bookId: string
@@ -46,6 +82,8 @@ export interface SavegameData {
   choicesTaken: Record<string, number>
   checkpoints: Checkpoint[]
   revealedEdges: RevealedEdge[]
+  stats: PlayerStats | null
+  combatLog: CombatEntry[]
   updatedAt: string
 }
 

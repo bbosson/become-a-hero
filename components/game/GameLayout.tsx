@@ -15,7 +15,9 @@ import GraphMap from '@/components/graph/GraphMap'
 import GraphDrawer from '@/components/graph/GraphDrawer'
 import SettingsDrawer from './SettingsDrawer'
 import LayoutPicker, { LayoutConfig, DEFAULT_LAYOUT, LAYOUT_KEY } from './LayoutPicker'
-import { SettingsData } from '@/types'
+import StatsPanel from './StatsPanel'
+import CombatPanel from './CombatPanel'
+import { SettingsData, CombatEntry } from '@/types'
 import { Link } from 'react-router-dom'
 
 interface Props {
@@ -28,7 +30,7 @@ interface Props {
 export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: Props) {
   const navigate = useNavigate()
   const { node, loading, error, updateTitle, updateIcon, generateTitle } = useNode(bookId, nodeNumber)
-  const { savegame, saveLoading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited, goBack, goBackAndForget } = useSaveGame(bookId)
+  const { savegame, saveLoading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited, goBack, goBackAndForget, eatProvision, testLuck, saveCombat } = useSaveGame(bookId)
   const { nodes: graphNodes, edges: graphEdges } = useGraphData(savegame, node)
   const [navigating, setNavigating] = useState(false)
   const [layout, setLayout] = useState<LayoutConfig>(DEFAULT_LAYOUT)
@@ -123,6 +125,17 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
       setJumpNode('')
     }
   }
+
+  const [combatOpen, setCombatOpen] = useState(false)
+
+  const handleCombatClose = useCallback(async (entry: CombatEntry | null) => {
+    setCombatOpen(false)
+    if (entry) await saveCombat(entry)
+  }, [saveCombat])
+
+  const handleEditStats = useCallback(() => {
+    navigate(`/play/${bookId}/intro`)
+  }, [navigate, bookId])
 
   const canGoBack = !!savegame && savegame.nodeOrder.some(n => n !== savegame.currentNodeNumber)
   const isPinned = savegame?.resumeNodeNumber === nodeNumber
@@ -255,6 +268,17 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
             />
           </div>
 
+          {/* Stats bar */}
+          {savegame?.stats && (
+            <StatsPanel
+              stats={savegame.stats}
+              onEatProvision={eatProvision}
+              onTestLuck={testLuck}
+              onOpenCombat={() => setCombatOpen(true)}
+              onEditStats={handleEditStats}
+            />
+          )}
+
           {/* Checkpoint bar */}
           <CheckpointBar
             checkpoints={savegame?.checkpoints || []}
@@ -287,6 +311,15 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
         bookId={bookId}
         onNodeClick={handleGraphNodeClick}
       />
+
+      {/* Combat modal */}
+      {combatOpen && savegame?.stats && (
+        <CombatPanel
+          stats={savegame.stats}
+          nodeNumber={nodeNumber}
+          onClose={handleCombatClose}
+        />
+      )}
     </div>
   )
 }
