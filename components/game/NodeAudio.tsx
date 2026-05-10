@@ -1,6 +1,5 @@
-'use client'
-
 import { useState, useEffect, useRef } from 'react'
+import { getIngressBasename } from '@/lib/ingressBasename'
 
 interface Props {
   bookId: string
@@ -39,7 +38,7 @@ export default function NodeAudio({ bookId, nodeNumber, audioUrl: initialUrl, au
   return (
     <div className="flex items-center gap-2 text-xs text-stone-500">
       <span>♪ Narration</span>
-      <audio ref={audioRef} src={url} controls className="h-6 flex-1" />
+      <audio ref={audioRef} src={`${getIngressBasename()}${url}`} controls className="h-6 flex-1" />
     </div>
   )
 }

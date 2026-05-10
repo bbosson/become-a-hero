@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { getIngressBasename } from '@/lib/ingressBasename'
 
 interface Props {
   bookId: string
@@ -41,7 +42,7 @@ export default function NodeImage({ bookId, nodeNumber, imageUrl: initialUrl, im
 
   if (!url) return null
 
-  const src = url
+  const src = `${getIngressBasename()}${url}`
 
   return (
     <>
