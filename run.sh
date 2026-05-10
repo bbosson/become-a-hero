@@ -18,6 +18,8 @@ elif command -v bashio &>/dev/null; then
 fi
 
 export API_PORT=3001
+# /data is HA addon persistent storage; use it for uploads so files survive restarts
+export UPLOAD_DIR=/data/uploads
 
 echo "Running Prisma migrations..."
 node node_modules/prisma/build/index.js migrate deploy

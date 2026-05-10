@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { resolveUploadDir } from '../uploadDir'
 
 type NodeImageMap = Map<number, string>
 
@@ -26,8 +27,7 @@ export async function extractPdfImages(
       verbosity: 0,
     }).promise
 
-    const uploadDir = process.env.UPLOAD_DIR || './uploads'
-    const nodesDir = path.join(process.cwd(), uploadDir.replace('./', ''), bookId, 'nodes')
+    const nodesDir = resolveUploadDir(bookId, 'nodes')
     fs.mkdirSync(nodesDir, { recursive: true })
 
     // Pass 1 — collect node numbers per page (text only, fast)

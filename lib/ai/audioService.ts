@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import fs from 'fs'
 import path from 'path'
+import { resolveUploadDir } from '@/lib/uploadDir'
 
 export async function generateNodeAudio(bookId: string, nodeNumber: number): Promise<string | null> {
   const settings = await prisma.settings.findFirst()
@@ -12,8 +13,7 @@ export async function generateNodeAudio(bookId: string, nodeNumber: number): Pro
   if (!node) return null
   if (node.audioUrl) return node.audioUrl
 
-  const uploadDir = process.env.UPLOAD_DIR || './uploads'
-  const nodeDir = path.join(uploadDir, bookId, 'nodes')
+  const nodeDir = resolveUploadDir(bookId, 'nodes')
   fs.mkdirSync(nodeDir, { recursive: true })
   const audioPath = path.join(nodeDir, `${nodeNumber}.mp3`)
 

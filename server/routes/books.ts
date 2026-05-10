@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import fs from 'fs'
-import path from 'path'
 import { prisma } from '../../lib/db'
+import { resolveUploadDir } from '../../lib/uploadDir'
 
 const router = Router()
 
@@ -33,8 +33,7 @@ router.delete('/:bookId', async (req, res) => {
     await prisma.book.delete({ where: { id: req.params.bookId } })
 
     // Delete uploads directory (images, audio, PDF)
-    const uploadDir = process.env.UPLOAD_DIR || './uploads'
-    const bookDir = path.join(process.cwd(), uploadDir.replace('./', ''), req.params.bookId)
+    const bookDir = resolveUploadDir(req.params.bookId)
     if (fs.existsSync(bookDir)) {
       fs.rmSync(bookDir, { recursive: true, force: true })
     }

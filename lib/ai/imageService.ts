@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import fs from 'fs'
 import path from 'path'
 import https from 'https'
+import { resolveUploadDir } from '@/lib/uploadDir'
 
 async function downloadImage(url: string, dest: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -23,8 +24,7 @@ export async function generateNodeImage(bookId: string, nodeNumber: number): Pro
   if (!node || !node.summary) return null
   if (node.imageUrl) return node.imageUrl
 
-  const uploadDir = process.env.UPLOAD_DIR || './uploads'
-  const nodeDir = path.join(uploadDir, bookId, 'nodes')
+  const nodeDir = resolveUploadDir(bookId, 'nodes')
   fs.mkdirSync(nodeDir, { recursive: true })
   const imagePath = path.join(nodeDir, `${nodeNumber}.jpg`)
 
