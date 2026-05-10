@@ -266,6 +266,19 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
               pinned={isPinned}
               canGoBack={canGoBack}
             />
+
+            {nodeNumber === 1 && (
+              <div className="mt-3">
+                <Link
+                  to={`/play/${bookId}/intro`}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm border border-stone-700/50 text-stone-400 hover:text-amber-400 hover:border-amber-700/50 transition-colors"
+                  title="Retour à l'introduction pour modifier vos caractéristiques"
+                >
+                  <span>📖</span>
+                  <span>Introduction / Caractéristiques</span>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Stats bar */}
