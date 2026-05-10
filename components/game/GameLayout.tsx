@@ -4,6 +4,7 @@ import { useNode } from '@/hooks/useNode'
 import { useSaveGame } from '@/hooks/useSaveGame'
 import { useGraphData } from '@/hooks/useGraphData'
 import NodeHeader from './NodeHeader'
+import NodeReader from './NodeReader'
 import NodeText from './NodeText'
 import NodeImage from './NodeImage'
 import NodeAudio from './NodeAudio'
@@ -17,7 +18,7 @@ import SettingsDrawer from './SettingsDrawer'
 import LayoutPicker, { LayoutConfig, DEFAULT_LAYOUT, LAYOUT_KEY } from './LayoutPicker'
 import StatsPanel from './StatsPanel'
 import CombatPanel from './CombatPanel'
-import { SettingsData, CombatEntry } from '@/types'
+import { SettingsData, CombatEntry, Choice } from '@/types'
 import { Link } from 'react-router-dom'
 
 interface Props {
@@ -239,7 +240,15 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
                 audioEnabled={settings.audioEnabled}
               />
 
-              <NodeText content={node.contentRaw} />
+              <div className="relative">
+                <NodeReader
+                  key={nodeNumber}
+                  content={node.contentRaw}
+                  choices={node.choices as Choice[]}
+                  autoRead={settings.autoRead}
+                />
+                <NodeText content={node.contentRaw} />
+              </div>
             </div>
 
             {node.isTerminal ? (

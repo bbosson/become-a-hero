@@ -1,0 +1,1 @@
+ALTER TABLE `Settings` ADD COLUMN `autoRead` BOOLEAN NOT NULL DEFAULT false;

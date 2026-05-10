@@ -109,6 +109,7 @@ export interface SettingsData {
   providerAudio: string
   imagesEnabled: boolean
   audioEnabled: boolean
+  autoRead: boolean
 }
 
 export interface ValidationReport {

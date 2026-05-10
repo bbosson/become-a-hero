@@ -79,4 +79,5 @@ model Settings {
   providerAudio String  @default("openai_tts")
   imagesEnabled Boolean @default(false)
   audioEnabled  Boolean @default(false)
+  autoRead      Boolean @default(false)
 }

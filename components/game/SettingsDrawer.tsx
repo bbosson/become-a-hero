@@ -71,6 +71,15 @@ export default function SettingsDrawer() {
                         className="w-4 h-4 accent-amber-500"
                       />
                     </label>
+                    <label className="flex items-center justify-between">
+                      <span className="text-sm text-stone-300">Lecture automatique</span>
+                      <input
+                        type="checkbox"
+                        checked={settings.autoRead}
+                        onChange={e => setSettings({ ...settings, autoRead: e.target.checked })}
+                        className="w-4 h-4 accent-amber-500"
+                      />
+                    </label>
                   </div>
                 </section>
 

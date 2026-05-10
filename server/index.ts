@@ -5,6 +5,7 @@ import settingsRouter from './routes/settings'
 import nodesRouter from './routes/nodes'
 import savegameRouter from './routes/savegame'
 import processRouter from './routes/process'
+import ttsRouter from './routes/tts'
 import { resolveUploadDir } from '../lib/uploadDir'
 
 const app = express()
@@ -18,6 +19,7 @@ app.use('/api/settings', settingsRouter)
 app.use('/api/nodes', nodesRouter)
 app.use('/api/savegame', savegameRouter)
 app.use('/api/process', processRouter)
+app.use('/api/tts', ttsRouter)
 
 // Serve uploaded files — /uploads/ for prod (nginx alias) and dev proxy; /api/uploads/ kept for compat
 app.use('/uploads', express.static(resolveUploadDir()))
