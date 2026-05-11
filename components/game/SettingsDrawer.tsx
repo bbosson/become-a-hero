@@ -120,6 +120,7 @@ export default function SettingsDrawer() {
                       onChange={e => setSettings({ ...settings, providerAudio: e.target.value })}
                       className="w-full px-3 py-2 bg-stone-800 border border-stone-700 rounded-lg text-stone-200 text-sm focus:outline-none focus:border-amber-600"
                     >
+                      <option value="piper">Piper (local, hors-ligne)</option>
                       <option value="openai_tts">OpenAI TTS-1</option>
                       <option value="elevenlabs">ElevenLabs</option>
                     </select>

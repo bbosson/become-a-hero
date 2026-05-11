@@ -7,7 +7,6 @@ import NodeHeader from './NodeHeader'
 import NodeReader from './NodeReader'
 import NodeText from './NodeText'
 import NodeImage from './NodeImage'
-import NodeAudio from './NodeAudio'
 import ChoiceList from './ChoiceList'
 import SaveBar from './SaveBar'
 import CheckpointBar from './CheckpointBar'
@@ -233,18 +232,15 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
                 imagesEnabled={settings.imagesEnabled}
               />
 
-              <NodeAudio
-                bookId={bookId}
-                nodeNumber={nodeNumber}
-                audioUrl={node.audioUrl}
-                audioEnabled={settings.audioEnabled}
-              />
-
               <div className="relative">
                 <NodeReader
                   key={nodeNumber}
+                  bookId={bookId}
+                  nodeNumber={nodeNumber}
                   content={node.contentRaw}
                   choices={node.choices as Choice[]}
+                  audioUrl={node.audioUrl}
+                  audioEnabled={settings.audioEnabled}
                   autoRead={settings.autoRead}
                 />
                 <NodeText content={node.contentRaw} />

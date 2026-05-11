@@ -20,7 +20,49 @@ export async function generateNodeAudio(bookId: string, nodeNumber: number): Pro
   const text = node.contentRaw.slice(0, 4000)
 
   try {
-    if (settings.providerAudio === 'openai_tts' && process.env.OPENAI_API_KEY) {
+    if (settings.providerAudio === 'piper') {
+      const piperBin = process.env.PIPER_BIN || 'piper'
+      const voice = process.env.PIPER_VOICE
+      if (!voice) return null
+
+      const { spawn } = await import('child_process')
+      const wavPath = audioPath.replace(/\.mp3$/, '.wav')
+
+      await new Promise<void>((resolve, reject) => {
+        const p = spawn(piperBin, ['--model', voice, '--output_file', wavPath])
+        let stderr = ''
+        p.stderr.on('data', d => { stderr += d.toString() })
+        p.on('error', reject)
+        p.on('close', (code, signal) => {
+          if (code === 0) return resolve()
+          console.error(`[piper] exit code=${code} signal=${signal} stderr=${stderr}`)
+          reject(new Error(`piper exit code=${code} signal=${signal}: ${stderr.slice(0, 500)}`))
+        })
+        p.stdin.write(text)
+        p.stdin.end()
+      })
+
+      await new Promise<void>((resolve, reject) => {
+        const f = spawn('ffmpeg', ['-y', '-i', wavPath, '-codec:a', 'libmp3lame', '-qscale:a', '4', audioPath])
+        let stderr = ''
+        f.stderr.on('data', d => { stderr += d.toString() })
+        f.on('error', reject)
+        f.on('close', (code, signal) => {
+          if (code === 0) return resolve()
+          console.error(`[ffmpeg] exit code=${code} signal=${signal} stderr=${stderr}`)
+          reject(new Error(`ffmpeg exit code=${code} signal=${signal}`))
+        })
+      })
+
+      try { fs.unlinkSync(wavPath) } catch {}
+
+      const relPath = `/uploads/${bookId}/nodes/${nodeNumber}.mp3`
+      await prisma.node.update({
+        where: { bookId_number: { bookId, number: nodeNumber } },
+        data: { audioUrl: relPath },
+      })
+      return relPath
+    } else if (settings.providerAudio === 'openai_tts' && process.env.OPENAI_API_KEY) {
       const { default: OpenAI } = await import('openai')
       const openai = new OpenAI()
       const mp3 = await openai.audio.speech.create({
