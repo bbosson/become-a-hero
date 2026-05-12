@@ -47,6 +47,7 @@ export interface PlayerStats {
   magieInit?: number
   provisions: number
   gold: number
+  spellsUsed?: Record<string, number>
 }
 
 export interface CombatRound {

@@ -25,7 +25,7 @@ const STAT_FORMULAS: Record<StatKey, string> = {
   habilite: '1d6+6',
   endurance: '2d6+12',
   chance: '1d6+6',
-  magie: '1d6',
+  magie: '2d6+6',
 }
 
 function rollStat(key: StatKey): number {
@@ -33,7 +33,7 @@ function rollStat(key: StatKey): number {
     case 'habilite': return roll(1, 6, 6)
     case 'endurance': return roll(2, 6, 12)
     case 'chance': return roll(1, 6, 6)
-    case 'magie': return roll(1, 6, 0)
+    case 'magie': return roll(2, 6, 6)
   }
 }
 
@@ -45,7 +45,7 @@ export default function StatsSetup({ bookId }: Props) {
   const [habilite, setHabilite] = useState(0)
   const [endurance, setEndurance] = useState(0)
   const [chance, setChance] = useState(0)
-  const [magie, setMagie] = useState<number | ''>('')
+  const [magie, setMagie] = useState(0)
   const [provisions, setProvisions] = useState(10)
   const [gold, setGold] = useState(0)
 
@@ -59,7 +59,7 @@ export default function StatsSetup({ bookId }: Props) {
           setHabilite(s.habiliteInit)
           setEndurance(s.enduranceInit)
           setChance(s.chanceInit)
-          setMagie(s.magieInit ?? '')
+          setMagie(s.magieInit ?? 0)
           setProvisions(s.provisions)
           setGold(s.gold)
         }
@@ -71,11 +71,11 @@ export default function StatsSetup({ bookId }: Props) {
     setHabilite(rollStat('habilite'))
     setEndurance(rollStat('endurance'))
     setChance(rollStat('chance'))
-    if (magie !== '') setMagie(rollStat('magie'))
+    setMagie(rollStat('magie'))
   }
 
   const handleSubmit = async () => {
-    if (!habilite || !endurance || !chance) return
+    if (!habilite || !endurance || !chance || !magie) return
     setSaving(true)
     const stats: PlayerStats = {
       habilite,
@@ -84,10 +84,11 @@ export default function StatsSetup({ bookId }: Props) {
       enduranceInit: endurance,
       chance,
       chanceInit: chance,
-      magie: magie !== '' ? Number(magie) : undefined,
-      magieInit: magie !== '' ? Number(magie) : undefined,
+      magie,
+      magieInit: magie,
       provisions,
       gold,
+      spellsUsed: {},
     }
     await fetch(`/api/savegame/${bookId}`, {
       method: 'PUT',
@@ -136,26 +137,7 @@ export default function StatsSetup({ bookId }: Props) {
           <StatInput statKey="habilite" value={habilite} onChange={setHabilite} />
           <StatInput statKey="endurance" value={endurance} onChange={setEndurance} />
           <StatInput statKey="chance" value={chance} onChange={setChance} />
-          <div className="flex items-center gap-3">
-            <div className="w-28 text-stone-300 text-sm font-medium">Magie</div>
-            <div className="text-xs text-stone-600 w-14">1d6 (opt.)</div>
-            <input
-              type="number"
-              min={1}
-              max={12}
-              value={magie}
-              onChange={e => setMagie(e.target.value === '' ? '' : parseInt(e.target.value) || 0)}
-              placeholder="—"
-              className="w-16 bg-stone-800 text-stone-100 text-center rounded px-2 py-1 border border-stone-700 focus:outline-none focus:border-amber-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-stone-600"
-            />
-            <button
-              onClick={() => setMagie(rollStat('magie'))}
-              className="text-sm px-2 py-1 rounded bg-stone-800 hover:bg-stone-700 text-amber-400 border border-stone-700 transition-colors"
-              title="Lancer 1d6"
-            >
-              🎲
-            </button>
-          </div>
+          <StatInput statKey="magie" value={magie} onChange={setMagie} />
         </div>
 
         <div className="border-t border-stone-700/40 pt-4 flex flex-col gap-3">
@@ -196,7 +178,7 @@ export default function StatsSetup({ bookId }: Props) {
         )}
         <button
           onClick={handleSubmit}
-          disabled={saving || !habilite || !endurance || !chance}
+          disabled={saving || !habilite || !endurance || !chance || !magie}
           className="py-3 px-8 rounded-lg bg-amber-700 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-lg transition-colors"
         >
           {saving ? 'Départ…' : existingStats ? 'Recommencer avec ces stats' : "Commencer l'aventure →"}

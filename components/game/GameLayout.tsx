@@ -30,7 +30,7 @@ interface Props {
 export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: Props) {
   const navigate = useNavigate()
   const { node, loading, error, updateTitle, updateIcon, generateTitle } = useNode(bookId, nodeNumber)
-  const { savegame, saveLoading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited, goBack, goBackAndForget, eatProvision, testLuck, saveCombat } = useSaveGame(bookId)
+  const { savegame, saveLoading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited, goBack, goBackAndForget, eatProvision, testLuck, saveCombat, updateStats } = useSaveGame(bookId)
   const { nodes: graphNodes, edges: graphEdges } = useGraphData(savegame, node)
   const [navigating, setNavigating] = useState(false)
   const [layout, setLayout] = useState<LayoutConfig>(DEFAULT_LAYOUT)
@@ -136,6 +136,10 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
   const handleEditStats = useCallback(() => {
     navigate(`/play/${bookId}/intro`)
   }, [navigate, bookId])
+
+  const handleUpdateSpells = useCallback(async (spellsUsed: Record<string, number>) => {
+    await updateStats({ spellsUsed })
+  }, [updateStats])
 
   const canGoBack = !!savegame && savegame.nodeOrder.some(n => n !== savegame.currentNodeNumber)
   const isPinned = savegame?.resumeNodeNumber === nodeNumber
@@ -294,6 +298,7 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
               onTestLuck={testLuck}
               onOpenCombat={() => setCombatOpen(true)}
               onEditStats={handleEditStats}
+              onUpdateSpells={handleUpdateSpells}
             />
           )}
 

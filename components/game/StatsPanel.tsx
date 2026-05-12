@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { PlayerStats } from '@/types'
+import SpellsPanel from './SpellsPanel'
 
 interface Props {
   stats: PlayerStats
@@ -9,9 +10,10 @@ interface Props {
   onTestLuck: () => Promise<{ lucky: boolean; roll: number } | null>
   onOpenCombat: () => void
   onEditStats: () => void
+  onUpdateSpells: (spellsUsed: Record<string, number>) => Promise<void>
 }
 
-export default function StatsPanel({ stats, onEatProvision, onTestLuck, onOpenCombat, onEditStats }: Props) {
+export default function StatsPanel({ stats, onEatProvision, onTestLuck, onOpenCombat, onEditStats, onUpdateSpells }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [luckResult, setLuckResult] = useState<{ lucky: boolean; roll: number } | null>(null)
 
@@ -44,12 +46,15 @@ export default function StatsPanel({ stats, onEatProvision, onTestLuck, onOpenCo
         {stats.magie !== undefined && (
           <span className="text-xs text-stone-400">✧ {stats.magie}/{stats.magieInit}</span>
         )}
-        <button
-          onClick={onOpenCombat}
-          className="ml-auto text-xs px-2 py-0.5 rounded bg-red-900/50 hover:bg-red-800/60 text-red-300 border border-red-800/40 transition-colors"
-        >
-          ⚔ Combat
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <SpellsPanel stats={stats} onUpdateSpells={onUpdateSpells} />
+          <button
+            onClick={onOpenCombat}
+            className="text-xs px-2 py-0.5 rounded bg-red-900/50 hover:bg-red-800/60 text-red-300 border border-red-800/40 transition-colors"
+          >
+            ⚔ Combat
+          </button>
+        </div>
       </div>
     )
   }
@@ -124,12 +129,15 @@ export default function StatsPanel({ stats, onEatProvision, onTestLuck, onOpenCo
           </span>
         )}
 
-        <button
-          onClick={onOpenCombat}
-          className="ml-auto text-xs px-3 py-1 rounded bg-red-900/50 hover:bg-red-800/60 text-red-300 border border-red-800/40 transition-colors font-medium"
-        >
-          ⚔ Combat
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <SpellsPanel stats={stats} onUpdateSpells={onUpdateSpells} />
+          <button
+            onClick={onOpenCombat}
+            className="text-xs px-3 py-1 rounded bg-red-900/50 hover:bg-red-800/60 text-red-300 border border-red-800/40 transition-colors font-medium"
+          >
+            ⚔ Combat
+          </button>
+        </div>
 
         <div className="flex items-center gap-1 text-xs text-stone-600">
           <span>🪙</span>
