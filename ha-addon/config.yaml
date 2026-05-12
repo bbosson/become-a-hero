@@ -1,5 +1,5 @@
 name: "Become a Hero"
-version: "3.6.0"
+version: "3.7.0"
 slug: "become_a_hero"
 description: "Livres dont vous êtes le héros — lecture interactive avec IA"
 url: "https://github.com/bbosson/become-a-hero"
