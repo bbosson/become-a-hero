@@ -6,6 +6,8 @@ import SpellsPanel from './SpellsPanel'
 
 interface Props {
   stats: PlayerStats
+  visitedCount: number
+  totalNodes: number
   onEatProvision: () => void
   onTestLuck: () => Promise<{ lucky: boolean; roll: number } | null>
   onOpenCombat: () => void
@@ -13,7 +15,7 @@ interface Props {
   onUpdateSpells: (spellsUsed: Record<string, number>) => Promise<void>
 }
 
-export default function StatsPanel({ stats, onEatProvision, onTestLuck, onOpenCombat, onEditStats, onUpdateSpells }: Props) {
+export default function StatsPanel({ stats, visitedCount, totalNodes, onEatProvision, onTestLuck, onOpenCombat, onEditStats, onUpdateSpells }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [luckResult, setLuckResult] = useState<{ lucky: boolean; roll: number } | null>(null)
 
@@ -46,6 +48,7 @@ export default function StatsPanel({ stats, onEatProvision, onTestLuck, onOpenCo
         {stats.magie !== undefined && (
           <span className="text-xs text-stone-400">✧ {stats.magie}/{stats.magieInit}</span>
         )}
+        <span className="text-xs text-stone-400">§ {visitedCount}/{totalNodes}</span>
         <div className="ml-auto flex items-center gap-2">
           <SpellsPanel stats={stats} onUpdateSpells={onUpdateSpells} />
           <button
@@ -63,7 +66,9 @@ export default function StatsPanel({ stats, onEatProvision, onTestLuck, onOpenCo
     <div className="border-t border-stone-800/50 bg-stone-950/80 px-4 py-3 flex flex-col gap-3">
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <span className="text-xs text-stone-500 uppercase tracking-widest">Héros</span>
+        <span className="text-xs text-stone-500 uppercase tracking-widest">
+          Héros <span className="text-stone-600 normal-case tracking-normal">· § {visitedCount}/{totalNodes}</span>
+        </span>
         <div className="flex items-center gap-2">
           <button
             onClick={onEditStats}

@@ -24,10 +24,11 @@ interface Props {
   bookId: string
   nodeNumber: number
   bookTitle: string
+  totalNodes: number
   settings: SettingsData
 }
 
-export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: Props) {
+export default function GameLayout({ bookId, nodeNumber, bookTitle, totalNodes, settings }: Props) {
   const navigate = useNavigate()
   const { node, loading, error, updateTitle, updateIcon, generateTitle } = useNode(bookId, nodeNumber)
   const { savegame, saveLoading, navigateTo, markCurrent, pinResumeHere, addCheckpoint, removeCheckpoint, restart, isVisited, goBack, goBackAndForget, eatProvision, testLuck, saveCombat, updateStats } = useSaveGame(bookId)
@@ -294,6 +295,8 @@ export default function GameLayout({ bookId, nodeNumber, bookTitle, settings }: 
           {savegame?.stats && (
             <StatsPanel
               stats={savegame.stats}
+              visitedCount={savegame?.visitedNodes?.length ?? 0}
+              totalNodes={totalNodes}
               onEatProvision={eatProvision}
               onTestLuck={testLuck}
               onOpenCombat={() => setCombatOpen(true)}

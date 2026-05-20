@@ -12,8 +12,20 @@ router.put('/:bookId', async (req, res) => {
   const body = req.body
   const bookId = req.params.bookId
 
-  const fields = {
-    currentNodeNumber: body.currentNodeNumber,
+  const update: Record<string, unknown> = {}
+  if (body.currentNodeNumber !== undefined) update.currentNodeNumber = body.currentNodeNumber
+  if (body.resumeNodeNumber !== undefined) update.resumeNodeNumber = body.resumeNodeNumber
+  if (body.visitedNodes !== undefined) update.visitedNodes = body.visitedNodes
+  if (body.nodeOrder !== undefined) update.nodeOrder = body.nodeOrder
+  if (body.choicesTaken !== undefined) update.choicesTaken = body.choicesTaken
+  if (body.checkpoints !== undefined) update.checkpoints = body.checkpoints
+  if (body.revealedEdges !== undefined) update.revealedEdges = body.revealedEdges
+  if (body.stats !== undefined) update.stats = body.stats
+  if (body.combatLog !== undefined) update.combatLog = body.combatLog
+
+  const create = {
+    bookId,
+    currentNodeNumber: body.currentNodeNumber ?? 1,
     resumeNodeNumber: body.resumeNodeNumber ?? null,
     visitedNodes: body.visitedNodes ?? [],
     nodeOrder: body.nodeOrder ?? [],
@@ -29,13 +41,13 @@ router.put('/:bookId', async (req, res) => {
   try {
     savegame = await prisma.savegame.upsert({
       where: { bookId },
-      create: { bookId, ...fields },
-      update: fields,
+      create,
+      update,
     })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
     if (msg.includes('1020') || msg.includes('Record has changed')) {
-      savegame = await prisma.savegame.update({ where: { bookId }, data: fields })
+      savegame = await prisma.savegame.update({ where: { bookId }, data: update })
     } else {
       throw e
     }

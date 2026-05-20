@@ -17,27 +17,32 @@ export async function PUT(
 ) {
   const body = await request.json()
 
+  const update: Record<string, unknown> = {}
+  if (body.currentNodeNumber !== undefined) update.currentNodeNumber = body.currentNodeNumber
+  if (body.resumeNodeNumber !== undefined) update.resumeNodeNumber = body.resumeNodeNumber
+  if (body.visitedNodes !== undefined) update.visitedNodes = body.visitedNodes
+  if (body.nodeOrder !== undefined) update.nodeOrder = body.nodeOrder
+  if (body.choicesTaken !== undefined) update.choicesTaken = body.choicesTaken
+  if (body.checkpoints !== undefined) update.checkpoints = body.checkpoints
+  if (body.revealedEdges !== undefined) update.revealedEdges = body.revealedEdges
+  if (body.stats !== undefined) update.stats = body.stats
+  if (body.combatLog !== undefined) update.combatLog = body.combatLog
+
   const savegame = await prisma.savegame.upsert({
     where: { bookId: params.bookId },
     create: {
       bookId: params.bookId,
-      currentNodeNumber: body.currentNodeNumber,
+      currentNodeNumber: body.currentNodeNumber ?? 1,
       resumeNodeNumber: body.resumeNodeNumber ?? null,
       visitedNodes: body.visitedNodes ?? [],
       nodeOrder: body.nodeOrder ?? [],
       choicesTaken: body.choicesTaken ?? {},
       checkpoints: body.checkpoints ?? [],
       revealedEdges: body.revealedEdges ?? [],
+      stats: body.stats ?? undefined,
+      combatLog: body.combatLog ?? [],
     },
-    update: {
-      currentNodeNumber: body.currentNodeNumber,
-      resumeNodeNumber: body.resumeNodeNumber ?? null,
-      visitedNodes: body.visitedNodes ?? [],
-      nodeOrder: body.nodeOrder ?? [],
-      choicesTaken: body.choicesTaken ?? {},
-      checkpoints: body.checkpoints ?? [],
-      revealedEdges: body.revealedEdges ?? [],
-    },
+    update,
   })
 
   return NextResponse.json(savegame)

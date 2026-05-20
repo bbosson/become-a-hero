@@ -27,6 +27,7 @@ export default async function PlayPage({ params }: Props) {
       bookId={params.bookId}
       nodeNumber={nodeNum}
       bookTitle={book.title}
+      totalNodes={book.totalNodes}
       settings={settings as unknown as SettingsData}
     />
   )

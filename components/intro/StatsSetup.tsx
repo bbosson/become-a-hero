@@ -88,12 +88,15 @@ export default function StatsSetup({ bookId }: Props) {
       magieInit: magie,
       provisions,
       gold,
-      spellsUsed: {},
+      spellsUsed: existingStats?.spellsUsed ?? {},
     }
+    const body = existingStats
+      ? { stats }
+      : { currentNodeNumber: 1, stats, combatLog: [] }
     await fetch(`/api/savegame/${bookId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ currentNodeNumber: 1, stats, combatLog: [] }),
+      body: JSON.stringify(body),
     })
     navigate(`/play/${bookId}/1`)
   }

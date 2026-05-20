@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
-import { useParams, Navigate } from 'react-router-dom'
 import GameLayout from '@/components/game/GameLayout'
 import { SettingsData } from '@/types'
+import { useEffect, useState } from 'react'
+import { Navigate, useParams } from 'react-router-dom'
 
 interface Book {
   id: string
   title: string
   status: string
+  totalNodes: number
 }
 
 export default function Play() {
@@ -47,6 +48,7 @@ export default function Play() {
       nodeNumber={nodeNum}
       bookTitle={book.title}
       settings={settings}
+      totalNodes={book.totalNodes}
     />
   )
 }
