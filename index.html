@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Become a Hero</title>
     <script>
-      if (window.location.pathname.includes('/api/hassio_ingress/')) {
-        const base = document.createElement('base');
-        base.href = './';
-        document.head.insertBefore(base, document.head.firstChild);
-      } else {
+      // En ingress HA: assets relatifs restent relatifs (./assets/)
+      // En dev/prod: ajouter <base href="/"> pour que relatifs deviennent absolus
+      if (!window.location.pathname.includes('/api/hassio_ingress/')) {
         const base = document.createElement('base');
         base.href = '/';
         document.head.insertBefore(base, document.head.firstChild);
