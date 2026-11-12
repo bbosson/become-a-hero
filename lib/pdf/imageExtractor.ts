@@ -14,15 +14,14 @@ export async function extractPdfImages(
   const result: NodeImageMap = new Map()
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js')
-    pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
 
     const data = new Uint8Array(fs.readFileSync(pdfPath))
     const doc = await pdfjsLib.getDocument({
       data,
       useWorkerFetch: false,
-      isEvalSupported: false,
+      isOffscreenCanvasSupported: false,
+      isImageDecoderSupported: false,
       useSystemFonts: true,
       verbosity: 0,
     }).promise
